@@ -170,7 +170,7 @@ Before you begin your analysis, make sure that you have removed any `tar.gz` fil
 rm /user/work/$USER/my_project/raw_data/filename
 ```
 
-Our final raw data directory should contain sequence data that are:
+Our final raw data directory should contain sequence data that are:  
 Paired (two files per biological sample)  
 Demultiplexed to sample (and by amplicon, depending on your library)  
 In FASTQ format  
@@ -196,23 +196,6 @@ The exact naming may differ between lab users and service providers, but as long
 
 
 
-**GUESSING EXTENSIONS**
-  The scripts below attempt to determine which are your paired 'R1' files and
-  which are the paired 'R2' files automatically based on their file names. During the
-  first step (N-removal), a log file named something
-  like "01_run_remove_Ns.o2658422" will be generated which contains the automatically
-  detected extensions.
-  <br><br>
-  If the extensions automatically detected are correct, you do not need to do
-  anything. If they are incorrect then you can override the automatic process
-  by specifying the R1 extensions (-W) and the R2 (-P) extensions.
-  <br><br> This automatic detection occurs throughout the workflow but you can
-  specify the extensions at steps where they are required using -W and -P if necessary.
-  <br>
-  <br>
-
-
-  
 ## 5) General principles, final check and preparation
 
 When running our analyses, we will work and launch all our jobs from within the `my_project` folder we wish to analyse. Navigate there, using
@@ -221,6 +204,7 @@ When running our analyses, we will work and launch all our jobs from within the 
 cd /user/work/$USER/my_project
 ```
 
+### 5.1) Scripts and submitting jobs
 
 Each step in the workflow uses a pair of separate scripts, which have been downloaded to `/user/work/$USER/my_project/scripts`. An R script, with the `.R` extension, contains the instructions for performing the DADA2 analysis in R on the HPC, and is run by submitting it as a script rather than running individual commands in R, as one would do interactively in RStudio. The shell script, with the `.sh` extension, requests the resources we need for running the analysis from the job scheduler, loads the bash profile, environment and software, parses the arguments for the R script, calls the R script and adds our job to the queue.
 
@@ -235,7 +219,7 @@ ls scripts/01*
 If we wanted to run this example (the `remove Ns`), we would submit the job to the scheduler, by executing the shell script using `sbatch`:
 
 ```
-# **Don't do this yet, it is just an example**
+# Don't do this yet, it is just an example
 sbatch scripts/01_run_remove_Ns.sh
 ```
 
@@ -247,7 +231,7 @@ squeue --me
 
 The job will then receive the allocated resources, the task will run, and the appropriate output files generated.
 
-Along with running standardised DADA2 scripts, there are some parameters that will be unique to your data or project, such as primer sequences or trimming/filtering parameters. The shell script will parse this information for implementation by the R script. We'll provide these extra parameters, termed "arguments, in the command line, using "flags", and the shell script will parse them for use by the R script. For example, you might provide your email address to a script using the `-E` flag, like this:
+Along with running standardised DADA2 scripts, there are some parameters that will be unique to your data or project, such as primer sequences or trimming/filtering parameters. We'll provide these extra parameters, termed "arguments, in the command line, using "flags", and the shell script will parse them for use by the R script. For example, you might provide your email address to a script using the `-E` flag, like this:
 
 ```
 a_demo_script.sh -E user@university.ac.uk
@@ -255,9 +239,12 @@ a_demo_script.sh -E user@university.ac.uk
 
 Details of the various arguments and flags are provided below.
 
-In this workflow, the output from one step is most often the input for the next step, so you **must** wait for each job to finish before submitting the next. This will also give you the chance to examine the output and error logs to make sure everything has run properly and for you to revisit some parameters and re-execute if you are not satisfied with the output.
+In this workflow, the output from one step is most often the input for the next step, so you **MUST** wait for each job to finish before submitting the next. This will also give you the chance to examine the output and error logs to make sure everything has run properly and for you to revisit some parameters and re-execute if you are not satisfied with the output.
 
-Before we begin, it is worth doing final checks to make sure:
+
+### 5.2) Final checks
+
+Before we begin, it is worth doing final checks to make sure:  
 You are in the correct `my_project` directory, 
 The `raw_data`, `R_objects`, `scripts` and `working_data` folders are there, 
 The `scripts` folder contains your scripts, and 
@@ -292,6 +279,29 @@ conda activate metabarcoding
 ```
   
 The environment is loaded correctly if `(metabarcoding)` appears at the start of the command line as it did when we set the environment up earlier.
+
+
+### 5.3) File extensions and sample names
+
+The scripts will determine which of your paired files are the 'R1' files and which are the 'R2' from their file names. During the first (N-removal) step (6, below), the log file will record the automatically detected extensions. If these are correct, no action is needed. If they are incorrect, you can override the automatic process by using flags to specify the R1 (`-W`) and the R2 (`-P`) extensions. This will need to be done at each point where these extensions are required (automatic detection happens throughout the workflow).
+
+A script, `functions.R`, contains R functions that are called and used throughout the workflow. One such function extracts your sample names from the sequence read file names. You will need to edit this before beginning to ensure that the correct sample names are extracted, as slight differences in the naming conventions will cause different parts of the file name to be retained as your sample name. If you open the `functions.R` script with "nano" (a Linux text editor). you should see the following section:
+
+```
+nano scripts/functions.R
+
+# Extract sample names (second number refers to the section to retain as name)
+get.sample.name <- function(fname) strsplit(basename(fname), "_")[[1]][2]
+
+## Option for extracting and compiling longer sample names when these are multiple file name sections
+## get.sample.name <- function(fname) paste(strsplit(basename(fname), "-|_")[[1]][3],
+##      strsplit(basename(fname), "-|_")[[1]][4], sep = "_")
+```
+
+This provides two options for extracting sample names. In the first (top) case, it will extract a single section of the file name to use as a sample name. In the second case, one can extract multiple parts of the file name and combine them to form your sample name. You'll need to edit this script to set which you wish to use (by annotating out wirth **#** that that you don't want to use, and to edit how the names are compiled. In both instances, we specify how we wish to segment/break up the file name and how we want to use or combine the segments. In the top case, the name will be split at each underscore (_). The file name will be split at each hyphen (-) and at each underscore in the second case. These can be edited so that you can use the characters needed to "isolate" your file name. Next, we specify which part of the fragmented file name we want to keep as our sample name. This is specified by the second number in square parentheses. In the first case, we are retaining the second segment ([2]) of the fragmented file name as our sample name. In the second case, we are retaining the third ([3]) and fourth ([4]) parts, and combing them, separated by an underscore (`sep = "_"`) when combined to form the sample name. Once we have edited this script to extract the correct sample name, we can save the file.
+
+Use `CTRL + X` to exit "nano". You will be asked if you want to save the changes. Type `y` for yes and hit enter to save using the same file name.
+
 
 
   DADA2 requires reads which do not contain any N characters. An N may be introduced

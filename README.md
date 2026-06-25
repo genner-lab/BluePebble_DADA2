@@ -10,11 +10,20 @@ Here, the workflow is adapted for use on the University of Bristol ACRC's BluePe
 
 Code which the user (i.e., you) should run is presented like this:
 
+```
+I am code - you must type and run me from the command line
+```
+
 
 Sometimes, this code may be presented with annotations to demonstrate the desired output or to give additional information. Like this:
 
+```
+Running this code
+# Can be executed like this, or
+# should give you output that looks like this
+```
 
-Filepaths in the normal text will be presented like this: ''
+Filepaths in the normal text and quoted text will be presented like this: `/path/to/my_data`
 
 Contact: Gavin Gouws || g.gouws@bristol.ac.uk
 
@@ -30,21 +39,27 @@ If you are working off campus, you log in as below, but will need to log on to t
 
 Connect to BluePebble using a secure shell (SSH) connection. If you are working on a Mac, you can use the terminal for your command-line work. If you are working in PC/Windows, you can download and install packages such as [MobaXterm](https://mobaxterm.mobatek.net/) or [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/), or use MSPowerShell. PuTTY may already be installed on a university-managed PC. If not, it is available through the university software centre. Type the code below into your command line, or provide the information in the relevant host, username and password fields in MobaXterm or PuTTY.
 
+```
 ssh username@bp1-login.acrc.bris.ac.uk
+```
 
 You will be prompted for your password. Once logged in, you will see useful system information and notifications in your terminal. You'll now be on a log-in node and the command prompt will look something like this:
 
-'[username@bp1-login03(BluePebble)'
+`[username@bp1-login03(BluePebble)`
 
 Users are not allowed to run interactive jobs on a log-in node, but we will use this for managing files and data, editing our scripts and doing small-scale interactive work (i.e., testing if things work and debugging if they don't). All our substantial data analysis will be done through submission scripts. We will use our allocated scratch space as our work space to store and work with all our data, scripts and environments. This is the larger of the two allocations available to you, with a limit of 1TB and 950 k files. It is important to note that data are **not** backed up here, and it is recommended that you back your raw data and scripts up elsewhere. Navigate to your work space:
 
+```
 cd /user/work/$USER
+```
 
 For all subsequent use of the HPC and processing of our metabarcoding data, we will work here. So, you can navigate to this directory every time you log on. 
 
 Should you wish to change your permissions to give others access to this directory, type the following:
 
+```
 chmod -R 755 /user/work/$USER
+```
 
 This will give others permission to view your files and execute them, but not to edit them. This is particularly useful if you would like help to troubleshoot issues.
 
@@ -58,19 +73,23 @@ Prior to first use, we will create an environment that will contain all the soft
 
 Download the Mamba installer to the cluster with this command:
 
+```
 wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+```
 
 Now execute the installer:
 
+```
 bash Miniforge3-$(uname)-$(uname -m).sh
+```
 
-You'll be asked to agree to the licence and to confirm the installation location; you may need to specify a new file path to ensure that it is installed in your work space (rather than your "home" space):
+You'll be asked to agree to the licence and to confirm the installation location; you may need to specify a new file path to ensure that it is installed in your work space, `/user/work/$USER/miniforge3` , rather than your "home" space.
 
-/user/work/$USER/miniforge3
+It will also ask whether it should initialise your shell environment/bash profile (`~/.bashrc`) and activate conda on start-up. Agree to this. This will complete the mamba set-up. You can delete the installer should you wish to keep things tidy:
 
-It will also ask whether it should initialise your shell environment/bash profile ('~/.bashrc') and activate conda on start-up. Agree to this. This will complete the mamba set-up. You can delete the installer should you wish to keep things tidy:
-
+```
 rm Miniforge*.sh
+```
 
 Shut down the current session and establish a new connection to BluePebble for all the changes to take effect.
 
@@ -79,15 +98,19 @@ Shut down the current session and establish a new connection to BluePebble for a
 
 We'll create a conda environment to include all the tools we'll need:
 
+```
 conda create -n metabarcoding
+```
 
-Prior to agreeing to proceed, be sure that the environment is being created in your work space ('/user/work/$USER/miniforge3/envs/metabarcoding').
+Prior to agreeing to proceed, be sure that the environment is being created in your work space (`/user/work/$USER/miniforge3/envs/metabarcoding`).
 
 Next, we'll activate this environment:
 
+```
 conda activate metabarcoding
+```
 
-You should see the start of the command line change from '(base)' to '(metabarcoding)'. When the environment is active, we'll add all our software and packages to it:
+You should see the start of the command line change from `(base)` to `(metabarcoding)`. When the environment is active, we'll add all our software and packages to it:
 
 
 

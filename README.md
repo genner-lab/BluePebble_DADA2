@@ -55,14 +55,6 @@ cd /user/work/$USER
 
 For all subsequent use of the HPC and processing of our metabarcoding data, we will work here. So, you can navigate to this directory every time you log on. 
 
-Should you wish to change your permissions to give others access to this directory, type the following:
-
-```
-chmod -R 755 /user/work/$USER
-```
-
-This will give others permission to view your files and execute them, but not to edit them. This is particularly useful if you would like help to troubleshoot issues.
-
 
 
 ## 3) Creating a conda environment
@@ -113,5 +105,468 @@ conda activate metabarcoding
 You should see the start of the command line change from `(base)` to `(metabarcoding)`. When the environment is active, we'll add all our software and packages to it:
 
 
+**CONTINUE WITH ENVIRONMENT AND SOFTWARE SET UP HERE**
+
+## 4) Getting ready
+
+
+Here, we'll set up the directories for our data and analyses, download the scripts and load our data.
+
+
+### 4.1) Creating the directories
+
+As mentioned, we'll work within our work space on BluePebble, which we have navigated to above. We first need to create the file structure, directories and subdirectories to hold our data, scripts, R objects and output. We can create these, by running each line of the code below:
+
+```
+mkdir /user/work/$USER/my_project
+mkdir /user/work/$USER/my_project/scripts
+mkdir /user/work/$USER/my_project/raw_data
+mkdir /user/work/$USER/my_project/working_data
+mkdir /user/work/$USER/my_project/R_objects
+```
+
+`my_project` is a placeholder and you can substitute this with something more meaningful to you. If you have multiple amplicons and your data have been demultiplexed such that each sequence read file is of one amplicon only, create separate `my_project` directory structures for separate analyses. If the amplicons are mixed in the read files and are to be separated bioinformatically, it may still be worth creating different `my_project` files, even with the same raw data, to keep the results and output distinct. 
+
+Should you wish to change your permissions to give others access to the directories you have just created, type the following:
+
+```
+chmod -R 755 /user/work/$USER/my_project
+```
+
+This will give others permission to view your files and execute them, but not to edit them. This is particularly useful if you would like help to troubleshoot issues.
+
+
+
+### 4.2) Download the scripts
+
+Download the scripts from this GitHub repository and then copy them into your scripts folder. You can then delete the GitHub download.
+
+```
+git clone "https://github.com/ggouws/BluePebble_DADA2"
+cp BluePebble_DADA2/scripts/* /user/work/$USER/my_project/scripts/
+rm -rf BluePebble_DADA2
+```
+
+### 4.3) Upload your data to BluePebble
+
+For this workflow, you need to provide the raw, paired-end DNA sequence data and place this within the relevant `/user/work/$USER/my_project/raw_data` directory. If you are using an external/commercial sequencing facility, they may provide you with download instructions or `curl` or `wget` links that will allow you to download directly to the HPC. 
+
+If you have your data downloaded to or stored on your computer, you'll need to use a secure file transfer protocol, such as ['scp' in your terminal](https://www.acrc.bris.ac.uk/protected/hpc-docs/transferring_data/index.html#on-linux-or-macos), the upload function and icon in MobaXterm, or [FileZilla](https://filezilla-project.org/) to upload your data to `/user/work/$USER/my_project/raw_data`.
+
+Check that your data has transferred/uploaded correctly by running `ls` on the `raw_data` folder, and you should see so something like this:
+
+
+```
+ls /user/work/$USER/my_project/raw_data
+# sample1_S1_R1_001.fq.gz
+# sample1_S1_R2_001.fq.gz
+# sample2_S2_R1_001.fq.gz
+# sample2_S2_R2_001.fq.gz
+```
+  
+Before you begin your analysis, make sure that you have removed any `tar.gz` files and any files labelled unclassified, e.g. `Unclassified_R1` or `Unclassified_R2`. If you have uploaded these and need to remove them:
+
+```
+rm /user/work/$USER/my_project/raw_data/filename
+```
+
+Our final raw data directory should contain sequence data that are:
+Paired (two files per biological sample)  
+Demultiplexed to sample (and by amplicon, depending on your library)  
+In FASTQ format  
+Compressed in .gz format (optional, but preferable)
+
+The pair of files from each biological samples should broadly have the following naming convention:
+
+```
+<sample_ID>_S<##>_R1_001.fastq.gz
+<sample_ID>_S<##>_R2_001.fastq.gz
+```
+
+Here `<sample_ID>` is a unique identifier, and `S<##>` is a sample number, which is normally assigned by the sequencing platform.
+
+So, a pair of files may look like this:
+
+```
+Water-Site31_16S_S01_R1_001.fastq.gz
+Water-Site31_16S_S01_R2_001.fastq.gz
+```
+
+The exact naming may differ between lab users and service providers, but as long as the naming is consistent with respect to identifying R1 and R2 files and across a data set, this is fine. The pipeline automatically detects the file extensions, identifies the R1 and R2 files and extracts the sample names (these are all addressed below).
+
+
+
+**GUESSING EXTENSIONS**
+  The scripts below attempt to determine which are your paired 'R1' files and
+  which are the paired 'R2' files automatically based on their file names. During the
+  first step (N-removal), a log file named something
+  like "01_run_remove_Ns.o2658422" will be generated which contains the automatically
+  detected extensions.
+  <br><br>
+  If the extensions automatically detected are correct, you do not need to do
+  anything. If they are incorrect then you can override the automatic process
+  by specifying the R1 extensions (-W) and the R2 (-P) extensions.
+  <br><br> This automatic detection occurs throughout the workflow but you can
+  specify the extensions at steps where they are required using -W and -P if necessary.
+  <br>
+  <br>
+
+
+  
+## 5) General principles, final check and preparation
+
+When running our analyses, we will work and launch all our jobs from within the `my_project` folder we wish to analyse. Navigate there, using
+
+```
+cd /user/work/$USER/my_project
+```
+
+
+Each step in the workflow uses a pair of separate scripts, which have been downloaded to `/user/work/$USER/my_project/scripts`. An R script, with the `.R` extension, contains the instructions for performing the DADA2 analysis in R on the HPC, and is run by submitting it as a script rather than running individual commands in R, as one would do interactively in RStudio. The shell script, with the `.sh` extension, requests the resources we need for running the analysis from the job scheduler, loads the bash profile, environment and software, parses the arguments for the R script, calls the R script and adds our job to the queue.
+
+We can see an example of such a pair of scripts:
+
+ ```
+ls scripts/01*
+# scripts/01_remove_Ns.R
+# scripts/01_run_remove_Ns.sh
+```
+
+If we wanted to run this example (the `remove Ns`), we would submit the job to the scheduler, by executing the shell script using `sbatch`:
+
+```
+# **Don't do this yet, it is just an example**
+sbatch scripts/01_run_remove_Ns.sh
+```
+
+Once we have submitted the job, we can check its status or progress using `squeue`.
+
+```
+squeue --me
+```
+
+The job will then receive the allocated resources, the task will run, and the appropriate output files generated.
+
+Along with running standardised DADA2 scripts, there are some parameters that will be unique to your data or project, such as primer sequences or trimming/filtering parameters. The shell script will parse this information for implementation by the R script. We'll provide these extra parameters, termed "arguments, in the command line, using "flags", and the shell script will parse them for use by the R script. For example, you might provide your email address to a script using the `-E` flag, like this:
+
+```
+a_demo_script.sh -E user@university.ac.uk
+```
+
+Details of the various arguments and flags are provided below.
+
+In this workflow, the output from one step is most often the input for the next step, so you **must** wait for each job to finish before submitting the next. This will also give you the chance to examine the output and error logs to make sure everything has run properly and for you to revisit some parameters and re-execute if you are not satisfied with the output.
+
+Before we begin, it is worth doing final checks to make sure:
+You are in the correct `my_project` directory, 
+The `raw_data`, `R_objects`, `scripts` and `working_data` folders are there, 
+The `scripts` folder contains your scripts, and 
+Your raw data are in the `raw_data` folder.
+
+**CHECK WHETHER EMAIL WOULD WORK**
+
+```
+pwd
+# /users/work/$USER/my_project
+  
+ls
+# raw_data  scripts   working_data  R_objects
+
+ls raw_data/
+# raw_input_file_S01_001_R1.fastq.gz
+# raw_input_file S01_001_R2.fastq.gz
+# [.... many more data files here....]
+
+ls scripts/
+#00_run_full_pipeline.sh  
+#01_remove_Ns.R
+#01_run_remove_Ns.sh
+# [.... many more scripts here....]
+```
+
+You can also test to see if you can load the conda environment without any error messages:
+
+```
+source ~/.bash_profile
+conda activate metabarcoding
+```
+  
+The environment is loaded correctly if `(metabarcoding)` appears at the start of the command line as it did when we set the environment up earlier.
+
+
+  DADA2 requires reads which do not contain any N characters. An N may be introduced
+  into a sequence read when the sequencing software is unable to confidently basecall
+  that position. This will likely be a small proportion of the sequence reads in the input
+  files. This script will also produce two files in the 'working_data' directory, "01_raw_read_counts.tsv"
+  and "01_filtN_read_counts.tsv", should you need to compare and report these read counts.
+
+  <br><br>
+  To perform the N removal, submit the '01_run_remove_Ns.sh' script as shown below.
+  <br><br>
+  <b>The command line arguments you must supply are:</b><br>
+  - the directory of raw data files (-D)
+  <br><br>
+  <b>Optionally, you can also supply:</b><br>
+  - an email address to receive notifications (-E flag).
+  - the R1 specific file extension (-W)
+  - the R2 specific file extension (-P)
+  <br><br>
+
+  ```
+  sbatch scripts/01_run_remove_Ns.sh -D raw_data/ -E user@university.ac.uk
+
+  ```
+  </details>
+  <br>
+  <details><summary><font size="6"><b>5.1) Run Cutadapt to remove primer sequences.</font></b></summary>
+  <br>
+  The next stage is to run Cutadapt on the data. <a href="https://cutadapt.readthedocs.io/en/stable/index.html">Cutadapt</a>
+  is a tool for finding and removing primer sequences from next-generation sequencing data. First, a scan is performed to check for primers in the data, then Cutadapt is performed, and finally a further scan occurs to check that no primers remain. If, from an initial quality assessment, you believe that there may be substantial sequencing errors in the primer region of your sequence, which may cause Cutadapt to not recognise the primer sequence, you can trim the sequences based on primer length. Should you wish to do this, proceed to <b>Section 5.2</b>.<br>
+  <br>
+  Two files will be generated in the 'working_data' directory: "02_pre_trim_primer_counts.tsv" and "02_post_trim_primer_counts.tsv", 
+as well as the Cutadapt-processed sequence files in the directory 'working_data/cutadapt'.
+  <br><br>
+  To run cutadapt on the files, submit the '02_run_cutadapt.sh' script as shown below
+  <br><br>
+  <b>The command line arguments you must supply are:</b><br>
+  - the directory of raw data (-D)<br>
+  - the forward primer sequence (-F)<br>
+  - the reverse primer sequence (-R)<br>
+  <br>
+  <b>Optionally, you can also supply:</b><br>
+  - an email address to receive notifications (-E)<br>
+  - a minimum read length (any processed reads shorter than this length are discarded) (-M)<br>
+  - the number of occurrences of a primer to be trimmed (-N)<br><br>
+
+  <b>Consider</b><br>
+  Imposing a minimum length can stop cutadapt from generating sequences of length zero (suggested value: -M 10, default value: -M 0).<br><br>
+  Allowing multiple occurrences of a primer to be trimmed is useful as a single read can sometimes contain multiple instances of the
+  same adapter (suggested value: -N 2, default value: -N 1).
+  <br><br>
+  We have also included as a default the cutadapt command --discard-untrimmed. This tells cutadapt to discard any read where the primers haven’t been trimmed off. This is especially important for any dataset where the files contain sequences amplified using more than one primer set.
+  <br><br>
+  An example command is given below but you will need to replace the primer sequences with those suitable for your data.
+
+  ```
+  sbatch scripts/02_run_cutadapt.sh -D raw_data/ -F CCTACGGGNGGCWGCAG -R GACTACHVGGGTATCTAATCC -M 10 -N 2 -E user@university.ac.uk
+  ```
+
+  Once Cutadapt has run you can check that it has successfull removed all the primer sequences from your reads.<br>
+  Both before and after the Cutadapt run itself, the script counts occurrences of primer sequences in your data and
+  deposits these read counts in the file 'working_data/02_pre_trim_primer_counts.tsv' and 'working_data/02_post_trim_primer_counts.tsv'.
+
+  Check and compare the contents of these files:
+  ```
+  head working_data/02*
+  ```
+
+  If the 'pre' file contains lots of non-zero numbers, and the 'file' contains only zeroes, everything has worked correctly.
+  Failing this you may need to re-run Cutadapt with different parameters (check your primer sequences, for instance).
+
+</details>
+  <br>
+  <details><summary><font size="6"><b>5.2) Removing primer sequences with filterAndTrim.</font></b></summary>
+  <br>
+  Rarely, it may be necessary to remove primers based on primer length rather than using Cutadapt to identify and remove primers in various orientations in the sequence reads themselves. This may be the case where sequence quality in the primer region is poor and increasing the mismatch thresholds in Cutadapt or specifying ambiguities in the primer sequence are impractical.
+<br>
+In this instance, one can use filterAndTrim and use the `--trim-left` function to remove a given length of sequence, corresponding to the length of the primers (and any remaining adapters) from start of the R1 and R2 reads, such that only the amplicon remains for further processing. The length of the primer to be removed will need to be determined beforehand, preferably from the read data directly. 
+<br>
+This script maintains the naming conventions with respect to the file structure and the creation of the R-objects, so that the pipeline can be followed further as though Cutadapt had been run.
+
+  To remove primer sequences from the files using filterAndTrim, submit the '02B_run_cutadapt.sh' script, as shown below.
+  <br><br>
+  <b>The command line arguments you must supply are:</b><br>
+  - the directory of raw data (-D)<br>
+  - the length of the (forward) primer to be removed from the R1 read (-F)<br>
+  - the length of the (reverse) primer to be removed from the R2 read (-R)<br>
+  <br>
+  <b>Optionally, you can also supply:</b><br>
+  - an email address to receive notifications (-E)<br><br>
+
+```
+  sbatch scripts/02B_run_cutadapt.sh -D raw_data/ -F 26 -R 27 -E user@university.ac.uk
+  ```
+
+Note: This approach is not suited for cases where multiple primers or a primer cocktail were used to create a multiplexed amplicon library, as the approach does not allow, as Cutadapt does, the extraction of only those reads where a primer was removed. All reads will be truncated with the parameters provided. Additionally, for amplicons shorter than the read length of the sequencing platform, this approach will not remove the reverse orientation of the opposite primer from the respective ends of the R1 and R2 reads.  
+
+  </details>
+  <br>
+
+  <details><summary><font size="6"><b>6) Generate quality plots</b></font></summary>
+
+  Having trimmed the adapters from the reads, we can then generate quality plots.
+  This allows us to see how
+  the overall quality of the sequence data changes throughout the reads and will inform
+  quality trimming parameters that we use later.
+  <br><br>
+  To generate quality plots, submit the '03_run_raw_quality_plots.sh' script as shown below.
+  <br><br>
+  <b>The command line arguments you must supply are:</b><br>
+  - an email address to receive a pdf of the quality plots (-E)
+
+  ```
+  sbatch scripts/03_run_raw_quality_plots.sh -E user@university.ac.uk
+
+  ```
+  Once the job has run, it may take a couple of minutes for the email containing the plots
+  to arrive. The script has been altered from the [original](https://github.com/khmaher/HPC_dada2)
+  to produce quality plots for those two samples with the largest file sizes (of the two sets of
+  paired read files). These should theoretically contain the largest number of reads and provide
+  a better indication of quality compared to the original script, which plotted only the read files
+  of the first two samples in the R object.
+  
+  </details>
+  <br>
+
+  <details><summary><font size="6"><b>7) Run filterAndTrim</b></font></summary>
+  <br>
+  From the quality plots generated earlier we need to determine some trimming parameters
+  to apply to the raw data. <br>
+  <br>
+  You will likely notice that the quality scores
+  decrease as the position in the read increases. You should determine a position in
+  the read (i.e. a position on the x-axis) where the reads should be truncated. This
+  will remove the lower quality data to the right of that position. The R1 and R2
+  reads may need a different truncation value (often R2 needs to truncated to a
+  shorter length).
+
+  For example, in the example below the data quality declines rapidly at around
+  position 160 in both the R1 and R2 reads. The truncation parameter for both should
+  therefore be 160.
+
+  <img src="images/trim_example.png"
+       alt="Quality plots example"
+       style="left; margin-right: 10px; width:700px;" />
+  (Image credit: https://benjjneb.github.io/dada2/tutorial.html, distributed under a Creative Commons BY 4.0 licence.)
+
+  <br>
+
+  <b>A Note on optimising trimming parameters</b><br>
+  You may want to run '04_filterAndTrim.sh' several times to optimise the various trimming parameters. You can choose to just process the first two sequence
+  files (and receive the quality plots) for speed before applying your optimised parameters to the full dataset. To enable this "subset" mode, use the -U flag detailed below.
+  <br><br>
+  To perform the filter and trim step, submit the '04_run_filterAndTrim.sh' script as shown below.
+  <br><br>
+  <b>The command line arguments you must supply are:</b><br>
+  - an email address to receive a pdf of the quality plots (-E)
+
+Like the pre-trimmed quality plots, post-trimmed quality plots will be produced for the two samples with the largest file sizes 
+(i.e., potentially containing the greatest number of reads). These should be the same two samples as before unless there are 
+quality concerns and filterAndTrim removes much data from the two earlier samples.
+
+  filterAndTrim will run using the default parameters if you don't submit any further optional parameters. 
+
+  <br>
+  <b>Optionally, you can also supply:</b><br>
+  - truncation length for the R1 forward read (-T flag)<br>
+  - truncation length for the R2 reverse read (-S flag)<br>
+  - maxEE for the R1 forward read (-G flag)<br>
+  - maxEE for the R2 reverse read (-H flag)<br>
+  - truncQ (-Q flag)<br>
+  - minimum length (-L flag)<br>
+  - apply filterAndTrim to a small subset of files (-U TRUE)<br>
+  <br><br>
+
+  The truncation parameters trim reads to a fixed maximum length specified by the user.
+  MaxEE control the allowed number of expected errors in each read.
+  truncQ truncates reads at the first instance of a base with less than or equal to the value specified by the user.
+  Minimum length removes reads shorter than the value specified by the user.
+
+  To just filter a subset of files, use set -U as TRUE, as in the example below.
+
+  <br>
+
+  More details about these dada2 trimming parameters can be found on the dada2
+  [tutorial pages](https://benjjneb.github.io/dada2/tutorial_1_8.html).
+
+  Submit the filterAndTrim job to the job scheduler, along the command line arguments with something similar to the following:
+
+  ```
+  sbatch scripts/04_run_filterAndTrim.sh -T 240 -S 220 -G 2 -H 2 -Q 2 -L 50 -E user@university.ac.uk
+
+  ## to filterAndTrim just a small subset of samples, set -U as TRUE:
+  sbatch scripts/04_run_filterAndTrim.sh -T 240 -S 220 -G 2 -H 2 -Q 2 -L 50 -U TRUE -E user@university.ac.uk
+  ```
+  <br>
+  </details>
+  <br>
+  <details><summary><font size="6"><b>8) Generate error model(s) and inspect plots</b></font></summary>
+  <br>
+
+  For the dada2 error correction to run, dada2 must first model the error rates of the datasets using both the forward
+  and reverse reads. Since each dataset is produced under unique conditions, it will also have a specific error-signature.
+
+  To run the error modelling and produce plots showing the estimated error rates submit the '05_run_generate_error_model.sh' script as shown below.
+  <br><br>
+  <b>The command line arguments you must supply are:</b><br>
+  - an email address to receive a pdf of the error model plots (-E)
+
+  ```
+  sbatch scripts/05_run_generate_error_model.sh -E user@university.ac.uk
+  ```
+
+  The data in the plots show the error rates for the possible type of transition (A being mis-detected as T, G being mis-detected as C, etc.).
+  The red line is the rate of substitution based on the quality score. The black line is the estimated error rate, and the black dots are the observed values.
+
+  We expect to see the observed points match up with the estimated line. We also expect to see the overall error rate decrease with increasing quality score.
+
+  </details>
+  <br>
+  <details><summary><font size="6"><b>9) Dereplicate reads, perform dada denoising, merge reads & remove chimeras</b></font></summary>
+  <br>
+  This step incorporates several of the dada2 processses:<br>
+
+  - Reads are dereplicated (identical reads are collapsed together so save processing time later)<br><br>
+  - The main dada2 denoising algorithm is applied to the reads (this is the all important identification of Amplicon Sequence Variants (ASVs))<br><br>
+  - Reads are merged (paired end reads from the sequencer are merged using their overlap to produce a single, higher quality read)<br><br>
+  - Chimeric reads are identified and removed.<br><br>
+  <br>
+  To perform the dereplication, denoising, read merging, and chimera removal step, submit the '06_run_derep_dada2_merge_remove_chimeras.sh' script as shown below.<br><br>
+  <b>Optionally, you can supply:</b><br>
+  - an email address to receive notifications (-E) <br>
+
+  ```
+  sbatch scripts/06_run_derep_dada2_merge_remove_chimeras.sh -E user@university.ac.uk
+  ```
+
+This script will produce three files. '06_ASV_seqs.fasta' will contain the amplicon sequence of each of your ASVs in fasta format. '06_ASV_counts.tsv' is a table containing the read counts for each ASV (identified by its sequence) in each sample. '06_ASV_lengths.tsv' provides the length of the amplicon for each ASV. If you are interested in the distribution of amplicon lengths, you can summarise this information with the following command:
+
+```
+  cut -f 3 working_data/06_ASV_lengths.tsv | grep -v "Length" | sort | uniq -c
+  ```
+
+  <br>
+  </details>
+  <br>
+  <details><summary><font size="6"><b>10) Track reads through pipeline</b></font></summary>
+  <br>
+  Having applied quality trimming, dada2 denoising and chimera removal (amongst other processes), it is a good idea to track how many
+  reads have been removed at each stage as this may allow the identification of any issues in the data.<br><br>
+  To generate a table summarising the numbers of reads surviving each process, run the '07_run_sequence_tracking.sh' script as below:
+  <br><br>
+  <b>The command line arguments you must supply are:</b><br>
+  - an email address to receive the read tracking table (-E)
+
+  ```
+  sbatch scripts/07_run_sequence_tracking.sh -E user@university.ac.uk
+  ```  
+
+  </details>
+  <br>
+  <details><summary><font size="6"><b>11) Assign taxonomy to ASVs</b></font></summary><br><br>
+  Now we have a set of ASVs, the final stage of the dada2 workflow is to assign a taxonomy to each ASV.
+  Here, each ASV is compared to the reference database and assigned a taxonomy based on the closest sequence match.<br><br>
+
+  To perform the taxonomy assignment step, submit the '08_run_assign_taxonomy.sh' script as shown below.<br><br>
+  <b>The command line arguments you must supply are:</b><br>
+  - an appropriate reference database (-B)
+  <br><br>
+  <b>Optionally, you can supply:</b><br>
+  - an email address to the taxonomic assignments (-E) <br>
+
+  ```
+  sbatch scripts/08_run_assign_taxonomy.sh -B /shared/genomicsdb2/shared/silva/current/ -E user@university.ac.uk
+
+  ```  
 
 

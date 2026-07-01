@@ -111,7 +111,6 @@ bioconductor-biostrings bioconductor-shortread cutadapt
 
 This installs DADA2, cutadapt and the biostrings and shortread R-packages from the bioconda channel. These are needed for the main workflow. It also installs FastQC and MultiQC for quality inspections of the raw data. Details on how to use these - should you wish to - are at the end of this document.
 
-**CONTINUE WITH ENVIRONMENT AND SOFTWARE SET UP HERE**
 
 ## 4) Getting ready
 
@@ -243,7 +242,19 @@ Along with running standardised DADA2 scripts, there are some parameters that wi
 a_demo_script.sh -E user@university.ac.uk
 ```
 
-Details of the various arguments and flags are provided below.
+Details of the various arguments and flags for the various scripts are provided below.
+
+An **important** flag that we **must add** when submitting any job, is the `-A` or account argument. This is the account to which the job is "expensed" (use of the HPC is free, but they do keep track of each project's usage). This number is provided to you when you register an HPC project. If you are joining an existing project, an account number should be available. Failure to provide this account number will prevent your job from being run. The account number is specified like this example (don't worry, the example will be repeated in all the code provided to launch jobs below):
+
+```
+sbatch -A bisc123456 scripts/01_run_remove_Ns.sh
+```
+
+If you plan to run the same scripts over and over again, you can embed this information in the SLURM directives (among the other `#SBATCH` directives) at the top of each of your submission (`.sh`) scripts, by inserting the line below with a text editor. This will save you having to add the flag when submitting the job.
+
+```
+#SBATCH -A bisc123456
+```
 
 In this workflow, the output from one step is most often the input for the next step, so you **MUST** wait for each job to finish before submitting the next. This will also give you the chance to examine the output and error logs to make sure everything has run properly and for you to revisit some parameters and re-execute if you are not satisfied with the output.
 

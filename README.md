@@ -4,7 +4,7 @@
 
 ## 1) About, credits and other information
 
-This workflow is largely based on Benjiman Callahan's DADA2 tutorial (v.1.8), available on the DADA2 GitHub page. It also draws heavily on GitHub workflow developed by Graeme Fox and maintained by Kathryn Maher for use on the University of Sheffield's HPCs. 
+This workflow is largely based on Benjaman Callahan's DADA2 tutorial (v.1.8), available on the DADA2 GitHub page. It also draws heavily on GitHub workflow developed by Graeme Fox and maintained by Kathryn Maher for use on the University of Sheffield's HPCs. 
 
 Here, the workflow is adapted for use on the University of Bristol ACRC's BluePebble HPC. With appropriate modfications, this should be transferable to any Linux/GNU-based HPC system (but your mileage may vary).
 

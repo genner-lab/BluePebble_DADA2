@@ -105,7 +105,8 @@ conda activate metabarcoding
 You should see the start of the command line change from `(base)` to `(metabarcoding)`. When the environment is active, we'll add all our software and packages to it:
 
 ```
-mamba install -c bioconda fastqc multiqc bioconductor-dada2 bioconductor-biostrings bioconductor-shortread cutadapt
+mamba install -c bioconda fastqc multiqc bioconductor-dada2 \
+bioconductor-biostrings bioconductor-shortread cutadapt
 ```
 
 This installs DADA2, cutadapt and the biostrings and shortread R-packages from the bioconda channel. These are needed for the main workflow. It also installs FastQC and MultiQC for quality inspections of the raw data. Details on how to use these - should you wish to - are at the end of this document.

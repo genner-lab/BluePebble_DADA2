@@ -401,91 +401,65 @@ Once the job has run, it may take a couple of minutes for the email containing t
 
 From the quality plots we have just generated, we need to determine some trimming parameters to apply to our _cutadapt_-filtered amplicon data. Examine these plots and you will likely notice that the quality scores decrease along the length of the read. You'll need to determine a position in the reads (i.e., a position on the x-axis) at which point the quality drops (as seen in the lines and the heatmap), where the reads should be truncated. This will remove the lower quality data to the right of that position. The R1 and R2 reads may need different truncation values, with R2 often needing to be truncated to a shorter length. It is also worth examining the red line at the bottom of the plot. This can be interpreted as a "frequency histogram", indicating the proportion of reads that reach a given length. Truncation also serves as a filter; longer reads will be cut to this length, while shorter reads will be filtered out. One needs to be careful that, if you are trying to maximise the length of the reads, you are not inadvertently removing the bulk of your data because only a small fraction of the reads reach this longer length.
 
-As an examplebelow the data quality declines rapidly at around
-  position 160 in both the R1 and R2 reads. The truncation parameter for both should
-  therefore be 160.
+In the exampled below, the data quality declines rapidly at around position XXX in the R1 reads and around XXX in the R2 reads. We would consider truncating these at xxx and yyy, respectively.
 
   <img src="images/trim_example.png"
        alt="Quality plots example"
        style="left; margin-right: 10px; width:700px;" />
-  (Image credit: https://benjjneb.github.io/dada2/tutorial.html, distributed under a Creative Commons BY 4.0 licence.)
+ 
+You may want to run `04_filterAndTrim.sh` several times to optimise the various trimming parameters. To save time, you can explore this using just the first two sequence files and examine the quality plots for the trimmed and filtered data before applying your chosen parameters to the full dataset. To enable this "subset" mode, use the `-U` flag detailed below.
 
-  <br>
+To perform the filter and trim step, submit the `04_run_filterAndTrim.sh` script as shown below. _filterAndTrim_ will then run using the default parameters if you don't provide any additional parameters.
 
-  <b>A Note on optimising trimming parameters</b><br>
-  You may want to run '04_filterAndTrim.sh' several times to optimise the various trimming parameters. You can choose to just process the first two sequence
-  files (and receive the quality plots) for speed before applying your optimised parameters to the full dataset. To enable this "subset" mode, use the -U flag detailed below.
-  <br><br>
-  To perform the filter and trim step, submit the '04_run_filterAndTrim.sh' script as shown below.
-  <br><br>
-  <b>The command line arguments you must supply are:</b><br>
-  - an email address to receive a pdf of the quality plots (-E)
+The additional command line arguments you must supply are:  
+  - an email address to receive a pdf of the post-trimmed/filtered quality plots (-E)  
 
-Like the pre-trimmed quality plots, post-trimmed quality plots will be produced for the two samples with the largest file sizes 
-(i.e., potentially containing the greatest number of reads). These should be the same two samples as before unless there are 
-quality concerns and filterAndTrim removes much data from the two earlier samples.
+Optionally, you can also supply:  
+  - truncation length for the R1 forward read (-T flag)  
+  - truncation length for the R2 reverse read (-S flag)  
+  - maxEE for the R1 forward read (-G flag)  
+  - maxEE for the R2 reverse read (-H flag)  
+  - truncQ (-Q flag)  
+  - minimum length (-L flag)  
+  - apply filterAndTrim to a small subset of files (-U TRUE)  
 
-  filterAndTrim will run using the default parameters if you don't submit any further optional parameters. 
+The truncation parameters trim reads to a fixed maximum length specified by the user. MaxEE controls the allowed number of expected errors in each read. The truncQ argument truncates reads at the first instance of a base with a quality score less than or equal to the value specified by the user. Minimum length removes trimmed reads shorter than the value specified by the user.
 
-  <br>
-  <b>Optionally, you can also supply:</b><br>
-  - truncation length for the R1 forward read (-T flag)<br>
-  - truncation length for the R2 reverse read (-S flag)<br>
-  - maxEE for the R1 forward read (-G flag)<br>
-  - maxEE for the R2 reverse read (-H flag)<br>
-  - truncQ (-Q flag)<br>
-  - minimum length (-L flag)<br>
-  - apply filterAndTrim to a small subset of files (-U TRUE)<br>
-  <br><br>
+To just filter a subset of files, use set `-U` as `TRUE`, as in the example below.
 
-  The truncation parameters trim reads to a fixed maximum length specified by the user.
-  MaxEE control the allowed number of expected errors in each read.
-  truncQ truncates reads at the first instance of a base with less than or equal to the value specified by the user.
-  Minimum length removes reads shorter than the value specified by the user.
+More details about these DADA2 trimming parameters can be found on the [DADA2 tutorial pages](https://benjjneb.github.io/dada2/tutorial_1_8.html).
 
-  To just filter a subset of files, use set -U as TRUE, as in the example below.
+Submit the filterAndTrim job to the job scheduler, using command line arguments similar to the following:
 
-  <br>
+```
+sbatch scripts/04_run_filterAndTrim.sh -A bisc123456 -T 240 -S 220 -G 2 -H 2 -Q 2 -L 50 -E user@university.ac.uk
 
-  More details about these dada2 trimming parameters can be found on the dada2
-  [tutorial pages](https://benjjneb.github.io/dada2/tutorial_1_8.html).
+## to filterAndTrim just a small subset of samples, set -U as TRUE:
+sbatch scripts/04_run_filterAndTrim.sh -A 123456 -T 240 -S 220 -G 2 -H 2 -Q 2 -L 50 -U TRUE -E user@university.ac.uk
+```
+ 
+Like the pre-trimmed quality plots, post-trimmed quality plots will be produced for the two samples with the largest file sizes (i.e., potentially containing the greatest number of reads). This may not necessarily be the same set of samples as before as _filterAndTrim_ may have removed disproportionately more data from the previous samples.
 
-  Submit the filterAndTrim job to the job scheduler, along the command line arguments with something similar to the following:
 
-  ```
-  sbatch scripts/04_run_filterAndTrim.sh -T 240 -S 220 -G 2 -H 2 -Q 2 -L 50 -E user@university.ac.uk
+## 10) Generate error model(s) and inspect plots
 
-  ## to filterAndTrim just a small subset of samples, set -U as TRUE:
-  sbatch scripts/04_run_filterAndTrim.sh -T 240 -S 220 -G 2 -H 2 -Q 2 -L 50 -U TRUE -E user@university.ac.uk
-  ```
-  <br>
-  </details>
-  <br>
-  <details><summary><font size="6"><b>8) Generate error model(s) and inspect plots</b></font></summary>
-  <br>
+For the DADA2 error correction to run to identify ASVs, DADA2 must first model the error rates of the dataset using both the forward and reverse reads. Since different data sets are produced under unique conditions, they will also have specific error signatures.
 
-  For the dada2 error correction to run, dada2 must first model the error rates of the datasets using both the forward
-  and reverse reads. Since each dataset is produced under unique conditions, it will also have a specific error-signature.
+To run the error modelling and produce plots showing the estimated error rates, submit the `05_run_generate_error_model.sh` script as below.
 
-  To run the error modelling and produce plots showing the estimated error rates submit the '05_run_generate_error_model.sh' script as shown below.
-  <br><br>
-  <b>The command line arguments you must supply are:</b><br>
+The additional command line argument you must supply is:  
   - an email address to receive a pdf of the error model plots (-E)
 
-  ```
-  sbatch scripts/05_run_generate_error_model.sh -E user@university.ac.uk
-  ```
+```
+sbatch scripts/05_run_generate_error_model.sh -A 123456 -E user@university.ac.uk
+```
 
-  The data in the plots show the error rates for the possible type of transition (A being mis-detected as T, G being mis-detected as C, etc.).
-  The red line is the rate of substitution based on the quality score. The black line is the estimated error rate, and the black dots are the observed values.
+The data in the plots show the error rates for the possible type of transitions (A being mis-detected as T, G being mis-detected as C, etc.). The red line is the rate of substitution at a particular quality score. The black line is the estimated error rate, and the black dots are the observed values. We expect to see the observed points match up with the estimated line. We also expect to see the overall error rate decrease with increasing quality score.
 
-  We expect to see the observed points match up with the estimated line. We also expect to see the overall error rate decrease with increasing quality score.
 
-  </details>
-  <br>
-  <details><summary><font size="6"><b>9) Dereplicate reads, perform dada denoising, merge reads & remove chimeras</b></font></summary>
-  <br>
-  This step incorporates several of the dada2 processses:<br>
+## 11) Dereplicate reads, perform _dada_ denoising, merge reads & remove chimeras
+
+This step incorporates several of the dada2 processses:<br>
 
   - Reads are dereplicated (identical reads are collapsed together so save processing time later)<br><br>
   - The main dada2 denoising algorithm is applied to the reads (this is the all important identification of Amplicon Sequence Variants (ASVs))<br><br>

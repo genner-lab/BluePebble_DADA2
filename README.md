@@ -201,7 +201,7 @@ The exact naming may differ between lab users and service providers, but as long
 
 
 
-## 5) General principles, final check and preparation
+## 5) General principles, preparation and final checks
 
 When running our analyses, we will work and launch all our jobs from within the `my_project` folder we wish to analyse. Navigate there, using
 
@@ -325,53 +325,44 @@ This provides two options for extracting sample names. In the first (top) case, 
 Use `CTRL + X` to exit "nano". You will be asked if you want to save the changes. Type `y` for yes and hit enter to save using the same file name.
 
 
+# 6) Initial filtering (removal of Ns)
 
-  DADA2 requires reads which do not contain any N characters. An N may be introduced
-  into a sequence read when the sequencing software is unable to confidently basecall
-  that position. This will likely be a small proportion of the sequence reads in the input
-  files. This script will also produce two files in the 'working_data' directory, "01_raw_read_counts.tsv"
-  and "01_filtN_read_counts.tsv", should you need to compare and report these read counts.
+DADA2 requires reads which do not contain any N characters. An N may be introduced into a sequence read when the sequencing software is unable to confidently call a base at that position. This will likely be only a small proportion of the sequence reads in the input files. This script will also produce two files in the `working_data` directory, `01_raw_read_counts.tsv` and `01_filtN_read_counts.tsv`, should you need to compare and report these read counts.
 
-  <br><br>
-  To perform the N removal, submit the '01_run_remove_Ns.sh' script as shown below.
-  <br><br>
-  <b>The command line arguments you must supply are:</b><br>
+To perform the N removal, submit the '01_run_remove_Ns.sh' script as shown below.
+
+There is one command line argument you must supply (in addition to the account information, as above):  
   - the directory of raw data files (-D)
-  <br><br>
-  <b>Optionally, you can also supply:</b><br>
-  - an email address to receive notifications (-E flag).
-  - the R1 specific file extension (-W)
-  - the R2 specific file extension (-P)
-  <br><br>
 
-  ```
-  sbatch scripts/01_run_remove_Ns.sh -D raw_data/ -E user@university.ac.uk
+Optionally, you can also supply:  
+  - an email address to receive notifications (-E flag)  
+  - the R1 specific file extension (-W)  
+  - the R2 specific file extension (-P)  
+  
+```
+sbatch scripts/01_run_remove_Ns.sh -A bisc123456 -D raw_data/ -E user@university.ac.uk
+```
 
-  ```
-  </details>
-  <br>
-  <details><summary><font size="6"><b>5.1) Run Cutadapt to remove primer sequences.</font></b></summary>
-  <br>
-  The next stage is to run Cutadapt on the data. <a href="https://cutadapt.readthedocs.io/en/stable/index.html">Cutadapt</a>
-  is a tool for finding and removing primer sequences from next-generation sequencing data. First, a scan is performed to check for primers in the data, then Cutadapt is performed, and finally a further scan occurs to check that no primers remain. If, from an initial quality assessment, you believe that there may be substantial sequencing errors in the primer region of your sequence, which may cause Cutadapt to not recognise the primer sequence, you can trim the sequences based on primer length. Should you wish to do this, proceed to <b>Section 5.2</b>.<br>
-  <br>
-  Two files will be generated in the 'working_data' directory: "02_pre_trim_primer_counts.tsv" and "02_post_trim_primer_counts.tsv", 
-as well as the Cutadapt-processed sequence files in the directory 'working_data/cutadapt'.
-  <br><br>
-  To run cutadapt on the files, submit the '02_run_cutadapt.sh' script as shown below
-  <br><br>
-  <b>The command line arguments you must supply are:</b><br>
-  - the directory of raw data (-D)<br>
-  - the forward primer sequence (-F)<br>
-  - the reverse primer sequence (-R)<br>
-  <br>
-  <b>Optionally, you can also supply:</b><br>
-  - an email address to receive notifications (-E)<br>
-  - a minimum read length (any processed reads shorter than this length are discarded) (-M)<br>
-  - the number of occurrences of a primer to be trimmed (-N)<br><br>
 
-  <b>Consider</b><br>
-  Imposing a minimum length can stop cutadapt from generating sequences of length zero (suggested value: -M 10, default value: -M 0).<br><br>
+# 7) Run _cutadapt_ to remove primer sequences
+
+The next stage is to run _cutadapt_ on the data. [_Cutadapt_](https://cutadapt.readthedocs.io/en/stable/index.html") is a tool for finding and removing primer sequences from NGS data. In this script, we use _cutadapt_ to scan the data and identify sequence reads that contain the primer sequences (in various orientations), extract those reads (discarding those in which no primer sequences were found), and then remove the primer sequences, leaving only the amplicon. The scan is then repeated to check that no primer sequences remain. If you believe that there are substantial sequencing errors in your data, such that the primer sequences cannot be identified, an alternative approach is presented at the end of this workflow, where primers are trimmed based on length. This is generally **not** advised as spurious sequences that are not true amplicons will be retained. 
+
+Two files will be generated in the `working_data` directory (`02_pre_trim_primer_counts.tsv` and `02_post_trim_primer_counts.tsv`), while the _cutadapt_-processed sequence files will be in the directory `working_data/cutadapt`.
+
+To run cutadapt on the files, submit the `02_run_cutadapt.sh` script, as shown below.
+
+The command line arguments you must supply are:  
+  - the directory of raw data (-D)  
+  - the forward primer sequence (-F)  
+  - the reverse primer sequence (-R)  
+
+Optionally, you can also supply:  
+  - an email address to receive notifications (-E)  
+  - a minimum read length (any processed reads shorter than this length are discarded) (-M)  
+  - the number of occurrences of a primer to be trimmed (-N)  
+
+Imposing a minimum length can stop cutadapt from generating sequences of length zero (suggested value: -M 10, default value: -M 0).<br><br>
   Allowing multiple occurrences of a primer to be trimmed is useful as a single read can sometimes contain multiple instances of the
   same adapter (suggested value: -N 2, default value: -N 1).
   <br><br>
@@ -380,7 +371,8 @@ as well as the Cutadapt-processed sequence files in the directory 'working_data/
   An example command is given below but you will need to replace the primer sequences with those suitable for your data.
 
   ```
-  sbatch scripts/02_run_cutadapt.sh -D raw_data/ -F CCTACGGGNGGCWGCAG -R GACTACHVGGGTATCTAATCC -M 10 -N 2 -E user@university.ac.uk
+  sbatch scripts/02_run_cutadapt.sh -A bisc123456 -D raw_data/ -F CCTACGGGNGGCWGCAG -R GACTACHVGGGTATCTAATCC \
+-M 10 -N 2 -E user@university.ac.uk
   ```
 
   Once Cutadapt has run you can check that it has successfull removed all the primer sequences from your reads.<br>

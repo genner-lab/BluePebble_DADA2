@@ -256,7 +256,12 @@ If you plan to run the same scripts over and over again, you can embed this info
 #SBATCH -A bisc123456
 ```
 
-In this workflow, the output from one step is most often the input for the next step, so you **MUST** wait for each job to finish before submitting the next. This will also give you the chance to examine the output and error logs to make sure everything has run properly and for you to revisit some parameters and re-execute if you are not satisfied with the output.
+In this workflow, the output from one step is (in nearly all the cases) the input for the next step, so you **MUST** wait for each job to finish before submitting the next. This will also give you the chance to examine the logs to make sure everything has run properly and for you to revisit some parameters and re-execute if you are not satisfied with the output. While the manipulated data and output files will be written to the `working_data` directory, output and error logs will be saved to the main `my_project` directory. These will be named according to the step and will include the relevant job number, such as:
+
+```
+01_remove_Ns_<job number>_output.log
+01_remove_Ns_<job number>_error.log
+```
 
 
 ### 5.2) Final checks

@@ -109,7 +109,7 @@ mamba install -c bioconda fastqc multiqc bioconductor-dada2 \
 bioconductor-biostrings bioconductor-shortread cutadapt
 ```
 
-This installs DADA2, cutadapt and the biostrings and shortread R-packages from the bioconda channel. These are needed for the main workflow. It also installs FastQC and MultiQC for quality inspections of the raw data. Details on how to use these - should you wish to - are at the end of this document.
+This installs DADA2, _cutadapt_, and the biostrings and shortread R-packages from the bioconda channel. These are needed for the main workflow. It also installs FastQC and MultiQC for quality inspections of the raw data. Details on how to use these - should you wish to - are at the end of this document.
 
 
 ## 4) Getting ready
@@ -381,47 +381,27 @@ head working_data/02*
 If the `pre` file contains lots of non-zero numbers, and the `post` file contains only zeroes, everything has worked correctly. Failing this you may need to re-run _cutadapt_ with different parameters (check your primer sequences, for instance).
 
 
-## 8)
+## 8) Generate quality plots
 
-  <details><summary><font size="6"><b>6) Generate quality plots</b></font></summary>
+With any adapters and primers trimmed from out reads, we can now generate quality plots of the amplicons themselves. This allows us to see how the overall quality of the sequence data changes along and between the reads, and informs the quality trimming we will do later.
 
-  Having trimmed the adapters from the reads, we can then generate quality plots.
-  This allows us to see how
-  the overall quality of the sequence data changes throughout the reads and will inform
-  quality trimming parameters that we use later.
-  <br><br>
-  To generate quality plots, submit the '03_run_raw_quality_plots.sh' script as shown below.
-  <br><br>
-  <b>The command line arguments you must supply are:</b><br>
+To generate quality plots, submit the `03_run_raw_quality_plots.sh` script as shown below.
+
+The additional command line argument you must supply is:  
   - an email address to receive a pdf of the quality plots (-E)
 
-  ```
-  sbatch scripts/03_run_raw_quality_plots.sh -E user@university.ac.uk
+```
+sbatch scripts/03_run_raw_quality_plots.sh -A bisc123456 -E user@university.ac.uk
+```
 
-  ```
-  Once the job has run, it may take a couple of minutes for the email containing the plots
-  to arrive. The script has been altered from the [original](https://github.com/khmaher/HPC_dada2)
-  to produce quality plots for those two samples with the largest file sizes (of the two sets of
-  paired read files). These should theoretically contain the largest number of reads and provide
-  a better indication of quality compared to the original script, which plotted only the read files
-  of the first two samples in the R object.
-  
-  </details>
-  <br>
+Once the job has run, it may take a couple of minutes for the email containing the plots to arrive. If the email does not arrive, the pdf will have been saved to and can be retrieved from `my_project/working_data`. The script has been altered from earlier worksflows to produce quality plots for those two samples with the largest file sizes (for each of the R1 and R2 read files). These should theoretically contain the largest number of reads and provide a better indication of quality compared to the original script, which plotted only the read files of the first two samples in the R object. This would not have been very useful if the first few read files were negative (filtration, extraction or PCR) controls.
 
-  <details><summary><font size="6"><b>7) Run filterAndTrim</b></font></summary>
-  <br>
-  From the quality plots generated earlier we need to determine some trimming parameters
-  to apply to the raw data. <br>
-  <br>
-  You will likely notice that the quality scores
-  decrease as the position in the read increases. You should determine a position in
-  the read (i.e. a position on the x-axis) where the reads should be truncated. This
-  will remove the lower quality data to the right of that position. The R1 and R2
-  reads may need a different truncation value (often R2 needs to truncated to a
-  shorter length).
 
-  For example, in the example below the data quality declines rapidly at around
+## 9) Trimming and filtering the data with _filterAndTrim_
+
+From the quality plots we have just generated, we need to determine some trimming parameters to apply to our _cutadapt_-filtered amplicon data. Examine these plots and you will likely notice that the quality scores decrease along the length of the read. You'll need to determine a position in the reads (i.e., a position on the x-axis) at which point the quality drops (as seen in the lines and the heatmap), where the reads should be truncated. This will remove the lower quality data to the right of that position. The R1 and R2 reads may need different truncation values, with R2 often needing to be truncated to a shorter length. It is also worth examining the red line at the bottom of the plot. This can be interpreted as a "frequency histogram", indicating the proportion of reads that reach a given length. Truncation also serves as a filter; longer reads will be cut to this length, while shorter reads will be filtered out. One needs to be careful that, if you are trying to maximise the length of the reads, you are not inadvertently removing the bulk of your data because only a small fraction of the reads reach this longer length.
+
+As an examplebelow the data quality declines rapidly at around
   position 160 in both the R1 and R2 reads. The truncation parameter for both should
   therefore be 160.
 

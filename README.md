@@ -360,7 +360,7 @@ Optionally, you can also provide:
   - a minimum read length (any processed reads shorter than this length are discarded) (-M)  
   - the number of occurrences of a primer to be trimmed (-N)  
 
-Imposing a minimum length can stop cutadapt from generating and adding sequences of length zero to the file (suggested value: -M 10, default value: -M 0). Allowing multiple occurrences of a primer to be trimmed is useful as a single read can sometimes contain multiple instances of the same adapter (suggested value: -N 2, default value: -N 1). A default _cutadapt_ command `--discard-untrimmed` is included. This tells _cutadapt_ to discard any read where the primers haven’t been trimmed off. This is especially important for any dataset where the files contain sequences amplified using more than one primer set.
+Imposing a minimum length can stop cutadapt from generating and adding sequences of length zero to the file (suggested value: -M 10, default value: -M 0). Allowing multiple occurrences of a primer to be trimmed is useful as a single read can sometimes contain multiple instances of the same adapter (suggested value: -N 2, default value: -N 1). A default _cutadapt_ command `--discard-untrimmed` is included. This tells _cutadapt_ to discard any read where the primers haven’t been trimmed off. This is especially important for any dataset where the files contain sequences amplified using multiple primer sets.
  
 An example command is given below but you will need to replace the primer sequences with those suitable for your data.
 

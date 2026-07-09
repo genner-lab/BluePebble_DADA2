@@ -242,18 +242,37 @@ Along with running standardised DADA2 scripts, there are some parameters that wi
 a_demo_script.sh -E user@university.ac.uk
 ```
 
-Details of the various arguments and flags for the various scripts are provided below.
+Details of the various arguments and flags for the various scripts are provided at each of the steps below.
 
-An **important** flag that we **must add** when submitting any job, is the `-A` or account argument. This is the account to which the job is "expensed" (use of the HPC is free, but they do keep track of each project's usage). This number is provided to you when you register an HPC project. If you are joining an existing project, an account number should be available. Failure to provide this account number will prevent your job from being run. The account number is specified like this example (don't worry, the example will be repeated in all the code provided to launch jobs below):
+Some editing of the scripts is required before we can begin our analysis. 
 
-```
-sbatch -A bisc123456 scripts/01_run_remove_Ns.sh
-```
-
-If you plan to run the same scripts over and over again, you can embed this information in the SLURM directives (among the other `#SBATCH` directives) at the top of each of your submission (`.sh`) scripts, by inserting the line below with a text editor. This will save you having to add the flag when submitting the job.
+One script, `functions.R`, contains R functions that are called and used throughout the workflow. One such function extracts your sample names from the sequence read file names. You will need to edit this before beginning to ensure that the correct sample names are extracted, as slight differences in naming conventions used by different labs or sequencing facilities may result in names being extracted that don't mean anything to you. If you open the `functions.R` script with "nano" (a Linux text editor). you should see the following section:
 
 ```
-#SBATCH -A bisc123456
+nano scripts/functions.R
+
+# Extract sample names (second number refers to the section to retain as name)
+get.sample.name <- function(fname) strsplit(basename(fname), "_")[[1]][2]
+
+## Option for extracting and compiling longer sample names when these are multiple file name sections
+## get.sample.name <- function(fname) paste(strsplit(basename(fname), "-|_")[[1]][3],
+##      strsplit(basename(fname), "-|_")[[1]][4], sep = "_")
+```
+
+This provides two options for extracting sample names. In the first (top) case, it will extract a single part of the file name to use as a sample name. In the second case, one can extract multiple parts of the file name and combine them to form your sample name. You'll need to edit this script to set which you wish to use (by annotating out with **#** that section that you don't want to use), and to edit how the names are compiled. In both instances, we specify how we wish to segment/break up the file name and how we want to use/combine the segments. In the top case, the name will be split at each underscore (_). In the second case, the file name will be split at each hyphen (-) and at each underscore. These can be edited so that you can use any characters needed to "isolate" your file name. Next, we specify which part of the fragmented file name we want to keep as our sample name. This is specified by the second number in square parentheses. In the first case, we are retaining the second segment ([2]) of the fragmented file name as our sample name. In the second example, we are retaining the third ([3]) and fourth ([4]) parts, and combing them, separated by an underscore (`sep = "_"`) when combined, to form the sample name. Once we have edited this script to extract the correct sample name, we can save the file.
+
+Use `CTRL + X` to exit "nano". You will be asked if you want to save the changes. Type `y` for yes and hit enter to save using the same file name.
+
+The second edit we need to make to all the submission (`.sh`) scripts we want to use, is to add the account details. This is an **important** directive which we **must have** in the SLURM directives when submitting any job, This is the account to which the job is "expensed" (use of the HPC is free, but they do keep track of each project's usage). This number is provided to you when you register an HPC project. If you are joining an existing project, an account number should be available. Failure to provide this account number will prevent your job from being run. This directive is already embeddded in the downloaded scripts, but will need to be edited to reflect your own account. If you open any of the `.sh` scripts with "nano" (see above), you will see a list of SLURM directives at the top of the file. These all start with `$SBATCH`, which is followed by an argument and the parameters being set. These arguments set the computing resources we need and pass on other instructions (e.g., the file names for the log and error files). Look for this line
+
+```
+#SBATCH --account=XXXXXXXXXX
+```
+
+Using "nano" or a text editor, edit this to reflect your own account name and save the file (as above). This account number will be a combination of a four-letter department/school code and six numbers. For example:
+
+```
+$SBATCH --account=bisc123456
 ```
 
 In this workflow, the output from one step is (in nearly all the cases) the input for the next step, so you **MUST** wait for each job to finish before submitting the next. This will also give you the chance to examine the logs to make sure everything has run properly and for you to revisit some parameters and re-execute if you are not satisfied with the output. While the manipulated data and output files will be written to the `working_data` directory, output and error logs will be saved to the main `my_project` directory. These will be named according to the step and will include the relevant job number, such as:
@@ -271,8 +290,6 @@ You are in the correct `my_project` directory,
 The `raw_data`, `R_objects`, `scripts` and `working_data` folders are there, 
 The `scripts` folder contains your scripts, and 
 Your raw data are in the `raw_data` folder.
-
-**CHECK WHETHER EMAIL WOULD WORK**
 
 ```
 pwd
@@ -303,44 +320,25 @@ conda activate metabarcoding
 The environment is loaded correctly if `(metabarcoding)` appears at the start of the command line as it did when we set the environment up earlier.
 
 
-### 5.3) File extensions and sample names
-
-The scripts will determine which of your paired files are the 'R1' files and which are the 'R2' from their file names. During the first (N-removal) step (6, below), the log file will record the automatically detected extensions. If these are correct, no action is needed. If they are incorrect, you can override the automatic process by using flags to specify the R1 (`-W`) and the R2 (`-P`) extensions. This will need to be done at each point where these extensions are required (automatic detection happens throughout the workflow).
-
-A script, `functions.R`, contains R functions that are called and used throughout the workflow. One such function extracts your sample names from the sequence read file names. You will need to edit this before beginning to ensure that the correct sample names are extracted, as slight differences in the naming conventions will cause different parts of the file name to be retained as your sample name. If you open the `functions.R` script with "nano" (a Linux text editor). you should see the following section:
-
-```
-nano scripts/functions.R
-
-# Extract sample names (second number refers to the section to retain as name)
-get.sample.name <- function(fname) strsplit(basename(fname), "_")[[1]][2]
-
-## Option for extracting and compiling longer sample names when these are multiple file name sections
-## get.sample.name <- function(fname) paste(strsplit(basename(fname), "-|_")[[1]][3],
-##      strsplit(basename(fname), "-|_")[[1]][4], sep = "_")
-```
-
-This provides two options for extracting sample names. In the first (top) case, it will extract a single section of the file name to use as a sample name. In the second case, one can extract multiple parts of the file name and combine them to form your sample name. You'll need to edit this script to set which you wish to use (by annotating out wirth **#** that that you don't want to use, and to edit how the names are compiled. In both instances, we specify how we wish to segment/break up the file name and how we want to use or combine the segments. In the top case, the name will be split at each underscore (_). The file name will be split at each hyphen (-) and at each underscore in the second case. These can be edited so that you can use the characters needed to "isolate" your file name. Next, we specify which part of the fragmented file name we want to keep as our sample name. This is specified by the second number in square parentheses. In the first case, we are retaining the second segment ([2]) of the fragmented file name as our sample name. In the second case, we are retaining the third ([3]) and fourth ([4]) parts, and combing them, separated by an underscore (`sep = "_"`) when combined to form the sample name. Once we have edited this script to extract the correct sample name, we can save the file.
-
-Use `CTRL + X` to exit "nano". You will be asked if you want to save the changes. Type `y` for yes and hit enter to save using the same file name.
-
-
 ## 6) Initial filtering (removal of Ns)
 
 DADA2 requires reads which do not contain any N characters. An N may be introduced into a sequence read when the sequencing software is unable to confidently call a base at that position. This will likely be only a small proportion of the sequence reads in the input files. This script will also produce two files in the `working_data` directory, `01_raw_read_counts.tsv` and `01_filtN_read_counts.tsv`, should you need to compare and report these read counts.
 
 To perform the N removal, submit the '01_run_remove_Ns.sh' script as shown below.
 
-There is one command line argument you must supply (in addition to the account information, as above):  
+There is one command line argument you must supply:  
   - the directory of raw data files (-D)
 
 Optionally, you can also supply:  
   - an email address to receive notifications (-E flag)  
   - the R1 specific file extension (-W)  
   - the R2 specific file extension (-P)  
+
+The scripts will determine which of your paired files are the 'R1' files and which are the 'R2' from their file names. During this (N-removal) step, the log file will record the automatically detected extensions. If these are correct, no action is needed. If they are incorrect, you can override the automatic process by using flags above to specify the R1 (`-W`) and the R2 (`-P`) extensions. This will need to be done at each point where these extensions are required (automatic detection happens throughout the workflow).
+
   
 ```
-sbatch scripts/01_run_remove_Ns.sh -A bisc123456 -D raw_data/ -E user@university.ac.uk
+sbatch scripts/01_run_remove_Ns.sh -D raw_data/ -E user@university.ac.uk
 ```
 
 
@@ -352,7 +350,7 @@ Two files will be generated in the `working_data` directory (`02_pre_trim_primer
 
 To run cutadapt on the files, submit the `02_run_cutadapt.sh` script, as shown below.
 
-The additional command line arguments you must provide are:  
+The command line arguments you must provide are:  
   - the directory of raw data (-D)  
   - the forward primer sequence (-F)  
   - the reverse primer sequence (-R)  
@@ -367,13 +365,14 @@ Imposing a minimum length can stop cutadapt from generating and adding sequences
 An example command is given below but you will need to replace the primer sequences with those suitable for your data.
 
 ```
-sbatch scripts/02_run_cutadapt.sh -A bisc123456 -D raw_data/ -F CCTACGGGNGGCWGCAG -R GACTACHVGGGTATCTAATCC \
+sbatch scripts/02_run_cutadapt.sh -D raw_data/ -F CCTACGGGNGGCWGCAG -R GACTACHVGGGTATCTAATCC \
 -M 10 -N 2 -E user@university.ac.uk
 ```
 
 Once completed you can check that _cutadapt_ has successfully removed all the primer sequences from your reads. Before and after the _cutadapt_ run, the script counts occurrences of primer sequences in your data and records these read counts in the files `working_data/02_pre_trim_primer_counts.tsv` and `working_data/02_post_trim_primer_counts.tsv`.
 
 Check and compare the contents of these files:
+
 ```
 head working_data/02*
 ```
@@ -387,11 +386,11 @@ With any adapters and primers trimmed from out reads, we can now generate qualit
 
 To generate quality plots, submit the `03_run_raw_quality_plots.sh` script as shown below.
 
-The additional command line argument you must supply is:  
+The command line argument you must supply is:  
   - an email address to receive a pdf of the quality plots (-E)
 
 ```
-sbatch scripts/03_run_raw_quality_plots.sh -A bisc123456 -E user@university.ac.uk
+sbatch scripts/03_run_raw_quality_plots.sh -E user@university.ac.uk
 ```
 
 Once the job has run, it may take a couple of minutes for the email containing the plots to arrive. If the email does not arrive, the pdf will have been saved to and can be retrieved from `my_project/working_data`. The script has been altered from earlier worksflows to produce quality plots for those two samples with the largest file sizes (for each of the R1 and R2 read files). These should theoretically contain the largest number of reads and provide a better indication of quality compared to the original script, which plotted only the read files of the first two samples in the R object. This would not have been very useful if the first few read files were negative (filtration, extraction or PCR) controls.
@@ -411,7 +410,7 @@ You may want to run `04_filterAndTrim.sh` several times to optimise the various 
 
 To perform the filter and trim step, submit the `04_run_filterAndTrim.sh` script as shown below. _filterAndTrim_ will then run using the default parameters if you don't provide any additional parameters.
 
-The additional command line arguments you must supply are:  
+The command line arguments you must supply are:  
   - an email address to receive a pdf of the post-trimmed/filtered quality plots (-E)  
 
 Optionally, you can also supply:  
@@ -432,10 +431,10 @@ More details about these DADA2 trimming parameters can be found on the [DADA2 tu
 Submit the filterAndTrim job to the job scheduler, using command line arguments similar to the following:
 
 ```
-sbatch scripts/04_run_filterAndTrim.sh -A bisc123456 -T 240 -S 220 -G 2 -H 2 -Q 2 -L 50 -E user@university.ac.uk
+sbatch scripts/04_run_filterAndTrim.sh -T 240 -S 220 -G 2 -H 2 -Q 2 -L 50 -E user@university.ac.uk
 
 ## to filterAndTrim just a small subset of samples, set -U as TRUE:
-sbatch scripts/04_run_filterAndTrim.sh -A 123456 -T 240 -S 220 -G 2 -H 2 -Q 2 -L 50 -U TRUE -E user@university.ac.uk
+sbatch scripts/04_run_filterAndTrim.sh -T 240 -S 220 -G 2 -H 2 -Q 2 -L 50 -U TRUE -E user@university.ac.uk
 ```
  
 Like the pre-trimmed quality plots, post-trimmed quality plots will be produced for the two samples with the largest file sizes (i.e., potentially containing the greatest number of reads). This may not necessarily be the same set of samples as before as _filterAndTrim_ may have removed disproportionately more data from the previous samples.
@@ -447,14 +446,16 @@ For the DADA2 error correction to run to identify ASVs, DADA2 must first model t
 
 To run the error modelling and produce plots showing the estimated error rates, submit the `05_run_generate_error_model.sh` script as below.
 
-The additional command line argument you must supply is:  
+The command line argument you must supply is:  
   - an email address to receive a pdf of the error model plots (-E)
 
 ```
-sbatch scripts/05_run_generate_error_model.sh -A 123456 -E user@university.ac.uk
+sbatch scripts/05_run_generate_error_model.sh -E user@university.ac.uk
 ```
 
 The data in the plots show the error rates for the possible type of transitions (A being mis-detected as T, G being mis-detected as C, etc.). The red line is the rate of substitution at a particular quality score. The black line is the estimated error rate, and the black dots are the observed values. We expect to see the observed points match up with the estimated line. We also expect to see the overall error rate decrease with increasing quality score.
+
+***START FROM HERE***
 
 
 ## 11) Dereplicate reads, perform _dada_ denoising, merge reads & remove chimeras

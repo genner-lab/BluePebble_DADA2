@@ -263,16 +263,16 @@ This provides two options for extracting sample names. In the first (top) case, 
 
 Use `CTRL + X` to exit "nano". You will be asked if you want to save the changes. Type `y` for yes and hit enter to save using the same file name.
 
-The second edit we need to make to all the submission (`.sh`) scripts we want to use, is to add the account details. This is an **important** directive which we **must have** in the SLURM directives when submitting any job, This is the account to which the job is "expensed" (use of the HPC is free, but they do keep track of each project's usage). This number is provided to you when you register an HPC project. If you are joining an existing project, an account number should be available. Failure to provide this account number will prevent your job from being run. This directive is already embeddded in the downloaded scripts, but will need to be edited to reflect your own account. If you open any of the `.sh` scripts with "nano" (see above), you will see a list of SLURM directives at the top of the file. These all start with `$SBATCH`, which is followed by an argument and the parameters being set. These arguments set the computing resources we need and pass on other instructions (e.g., the file names for the log and error files). Look for this line
+The second edit we need to make to all the submission (`.sh`) scripts we want to use, is to add the account details. This is an **important** directive which we **must have** in the SLURM directives when submitting any job, This is the account to which the job is "expensed" (use of the HPC is free, but they do keep track of each project's usage). This number is provided to you when you register an HPC project. If you are joining an existing project, an account number should be available. Failure to provide this account number will prevent your job from being run. This directive is already embeddded in the downloaded scripts, but will need to be edited to reflect your own account. If you open any of the `.sh` scripts with "nano" (see above), you will see a list of SLURM directives at the top of the file. These all start with `$SBATCH`, which is followed by an argument and the parameters being set. These arguments set the computing resources we need and pass on other instructions (e.g., the file names for the log and error files). Look for this line:
 
 ```
-#SBATCH --account=XXXXXXXXXX
+#SBATCH --account=xxxxXXXXXX
 ```
 
 Using "nano" or a text editor, edit this to reflect your own account name and save the file (as above). This account number will be a combination of a four-letter department/school code and six numbers. For example:
 
 ```
-$SBATCH --account=bisc123456
+#SBATCH --account=bisc123456
 ```
 
 In this workflow, the output from one step is (in nearly all the cases) the input for the next step, so you **MUST** wait for each job to finish before submitting the next. This will also give you the chance to examine the logs to make sure everything has run properly and for you to revisit some parameters and re-execute if you are not satisfied with the output. While the manipulated data and output files will be written to the `working_data` directory, output and error logs will be saved to the main `my_project` directory. These will be named according to the step and will include the relevant job number, such as:

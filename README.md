@@ -467,31 +467,30 @@ This step is the crux of the whole DADA2 workflow and incorporates several of th
   - Chimeric reads are identified and removed.
 
 
-  To perform the dereplication, denoising, read merging, and chimera removal step, submit the '06_run_derep_dada2_merge_remove_chimeras.sh' script as shown below.<br><br>
-  <b>Optionally, you can supply:</b><br>
-  - an email address to receive notifications (-E) <br>
+To perform the dereplication, denoising, read merging and chimera removal, submit the `06_run_derep_dada2_merge_remove_chimeras.sh` script as below.
 
-  ```
-  sbatch scripts/06_run_derep_dada2_merge_remove_chimeras.sh -E user@university.ac.uk
-  ```
-
-This script will produce three files. '06_ASV_seqs.fasta' will contain the amplicon sequence of each of your ASVs in fasta format. '06_ASV_counts.tsv' is a table containing the read counts for each ASV (identified by its sequence) in each sample. '06_ASV_lengths.tsv' provides the length of the amplicon for each ASV. If you are interested in the distribution of amplicon lengths, you can summarise this information with the following command:
+Optionally, you can supply:  
+  - an email address to receive notifications (-E)
 
 ```
-  cut -f 3 working_data/06_ASV_lengths.tsv | grep -v "Length" | sort | uniq -c
-  ```
+sbatch scripts/06_run_derep_dada2_merge_remove_chimeras.sh -E user@university.ac.uk
+```
 
-  <br>
-  </details>
-  <br>
-  <details><summary><font size="6"><b>10) Track reads through pipeline</b></font></summary>
-  <br>
-  Having applied quality trimming, dada2 denoising and chimera removal (amongst other processes), it is a good idea to track how many
-  reads have been removed at each stage as this may allow the identification of any issues in the data.<br><br>
-  To generate a table summarising the numbers of reads surviving each process, run the '07_run_sequence_tracking.sh' script as below:
-  <br><br>
-  <b>The command line arguments you must supply are:</b><br>
-  - an email address to receive the read tracking table (-E)
+This script will produce three files in the `working_data` directory. First, `06_ASV_seqs.fasta` will contain the amplicon sequence of each of your identified ASVs in fasta format. A table, `06_ASV_counts.tsv`, contains the read counts for each ASV (identified by its sequence) in each sample. Lastly, `06_ASV_lengths.tsv` provides the sequence length for each ASV amplicon. If you are interested in the distribution of amplicon lengths, you can summarise this information with the following command:
+
+```
+cut -f 3 working_data/06_ASV_lengths.tsv | grep -v "Length" | sort | uniq -c
+```
+
+
+## 12) Track reads through pipeline
+
+Having applied quality trimming, DADA2 denoising and chimera removal (amongst other processes), it is a good idea to track how many reads have been removed at each stage as this may allow the identification of any issues in the data.
+
+We will generate a table summarising the numbers of reads remaining after each of the major steps by running `07_run_sequence_tracking.sh` script, as below:
+
+The command line argument that must be supplied is:  
+- an email address to receive the read tracking table (-E)
 
   ```
   sbatch scripts/07_run_sequence_tracking.sh -E user@university.ac.uk

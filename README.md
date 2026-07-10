@@ -492,9 +492,17 @@ We will generate a table summarising the numbers of reads remaining after each o
 The command line argument that must be supplied is:  
 - an email address to receive the read tracking table (-E)
 
-  ```
-  sbatch scripts/07_run_sequence_tracking.sh -E user@university.ac.uk
-  ```  
+```
+sbatch scripts/07_run_sequence_tracking.sh -E user@university.ac.uk
+```
+
+The table will be emailed to you and will also be saved in your `working_data` directory. 
+
+Viewing the table, the columns correspond to:  
+- The number of reads extracted using _cutadapt_ and from which the primer sequences were removed You can view the table, using `less` (press `q` to close when done):
+
+```
+l```
 
   </details>
   <br>

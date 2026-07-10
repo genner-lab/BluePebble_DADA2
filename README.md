@@ -236,7 +236,7 @@ squeue --me
 
 The job will then receive the allocated resources, the task will run, and the appropriate output files generated.
 
-Along with running standardised DADA2 scripts, there are some parameters that will be unique to your data or project, such as primer sequences or trimming/filtering parameters. We'll provide these extra parameters, termed "arguments, in the command line, using "flags", and the shell script will parse them for use by the R script. For example, you might provide your email address to a script using the `-E` flag, like this:
+Along with running standardised DADA2 scripts, there are some parameters that will be unique to your data or project, such as primer sequences or trimming/filtering parameters. We'll provide these extra parameters, termed "arguments", in the command line, using "flags", and the shell script will parse them for use by the R script. For example, you might provide your email address to a script using the `-E` flag, like this:
 
 ```
 a_demo_script.sh -E user@university.ac.uk
@@ -246,7 +246,7 @@ Details of the various arguments and flags for the various scripts are provided 
 
 Some editing of the scripts is required before we can begin our analysis. 
 
-One script, `functions.R`, contains R functions that are called and used throughout the workflow. One such function extracts your sample names from the sequence read file names. You will need to edit this before beginning to ensure that the correct sample names are extracted, as slight differences in naming conventions used by different labs or sequencing facilities may result in names being extracted that don't mean anything to you. If you open the `functions.R` script with "nano" (a Linux text editor). you should see the following section:
+One script, `functions.R`, contains R functions that are called and used throughout the workflow. One such function extracts your sample names from the sequence read file names. You will need to edit this before beginning to ensure that the correct sample names are extracted, as slight differences in naming conventions used by different labs or sequencing facilities may result in names being extracted are meaningless to you. If you open the `functions.R` script with "nano" (a Linux text editor), you should see the following section:
 
 ```
 nano scripts/functions.R
@@ -259,17 +259,19 @@ get.sample.name <- function(fname) strsplit(basename(fname), "_")[[1]][2]
 ##      strsplit(basename(fname), "-|_")[[1]][4], sep = "_")
 ```
 
-This provides two options for extracting sample names. In the first (top) case, it will extract a single part of the file name to use as a sample name. In the second case, one can extract multiple parts of the file name and combine them to form your sample name. You'll need to edit this script to set which you wish to use (by annotating out with **#** that section that you don't want to use), and to edit how the names are compiled. In both instances, we specify how we wish to segment/break up the file name and how we want to use/combine the segments. In the top case, the name will be split at each underscore (_). In the second case, the file name will be split at each hyphen (-) and at each underscore. These can be edited so that you can use any characters needed to "isolate" your file name. Next, we specify which part of the fragmented file name we want to keep as our sample name. This is specified by the second number in square parentheses. In the first case, we are retaining the second segment ([2]) of the fragmented file name as our sample name. In the second example, we are retaining the third ([3]) and fourth ([4]) parts, and combing them, separated by an underscore (`sep = "_"`) when combined, to form the sample name. Once we have edited this script to extract the correct sample name, we can save the file.
+This provides two options for extracting sample names. In the first (top) case, it will extract a single part of the file name to use as a sample name. In the second case, one can extract multiple parts of the file name and combine them to form your sample name. You'll need to edit this script to set which you wish to use (by deleting or annotating out with **#** that section that you don't want to use), and to edit how the names are compiled. In both instances, we specify how we wish to segment/break up the file name and how we want to use/combine the segments. In the top case, the name will be split at each underscore (_). In the second case, the file name will be split at each hyphen (-) and at each underscore. These can be edited so that you can use any characters needed to "isolate" your file name. Next, we specify which part of the fragmented file name we want to keep as our sample name. This is specified by the second number in square parentheses. In the first case, we are retaining the second segment ([2]) of the fragmented file name as our sample name. In the second example, we are retaining the third ([3]) and fourth ([4]) parts, and combing them, separated by an underscore (`sep = "_"`) when combined, to form the sample name. Once we have edited this script to extract the correct sample name, we can save the file.
 
 Use `CTRL + X` to exit "nano". You will be asked if you want to save the changes. Type `y` for yes and hit enter to save using the same file name.
 
-The second edit we need to make to all the submission (`.sh`) scripts we want to use, is to add the account details. This is an **important** directive which we **must have** in the SLURM directives when submitting any job, This is the account to which the job is "expensed" (use of the HPC is free, but they do keep track of each project's usage). This number is provided to you when you register an HPC project. If you are joining an existing project, an account number should be available. Failure to provide this account number will prevent your job from being run. This directive is already embeddded in the downloaded scripts, but will need to be edited to reflect your own account. If you open any of the `.sh` scripts with "nano" (see above), you will see a list of SLURM directives at the top of the file. These all start with `$SBATCH`, which is followed by an argument and the parameters being set. These arguments set the computing resources we need and pass on other instructions (e.g., the file names for the log and error files). Look for this line:
+The second edit we need to make to all the submission (`.sh`) scripts we want to use, is to add the account details. This is an **important** directive which we **must have** when submitting any job. Without this, your job will not run and may remain queued. This is the account to which the job is "expensed" (use of the HPC is free, but they do keep track of each project's usage). This number is provided to you when you register an HPC project. If you are joining an existing project, an account number should be available. The number will be a combination of a four-letter department/school code and six numbers (see below). The directive is already included in the downloaded scripts, but will need to be edited to reflect your own account. If you open any of the `.sh` scripts with "nano" (see above), you will see a list of SLURM directives at the top of the file. These all start with `#SBATCH`, which is followed by an argument and the parameters being set. These arguments set the computing resources we need and pass on other instructions (e.g., the file names for the log and error files). 
+
+Look for this line:
 
 ```
 #SBATCH --account=xxxxXXXXXX
 ```
 
-Using "nano" or a text editor, edit this to reflect your own account name and save the file (as above). This account number will be a combination of a four-letter department/school code and six numbers. For example:
+Using "nano" or a text editor, edit this to reflect your own account name and save the file (as above). For example:
 
 ```
 #SBATCH --account=bisc123456
@@ -278,7 +280,7 @@ Using "nano" or a text editor, edit this to reflect your own account name and sa
 In this workflow, the output from one step is (in nearly all the cases) the input for the next step, so you **MUST** wait for each job to finish before submitting the next. This will also give you the chance to examine the logs to make sure everything has run properly and for you to revisit some parameters and re-execute if you are not satisfied with the output. While the manipulated data and output files will be written to the `working_data` directory, output and error logs will be saved to the main `my_project` directory. These will be named according to the step and will include the relevant job number, such as:
 
 ```
-01_remove_Ns_<job number>_output.log
+01_remove_Ns_<job number>.log
 01_remove_Ns_<job number>_error.log
 ```
 
@@ -455,18 +457,16 @@ sbatch scripts/05_run_generate_error_model.sh -E user@university.ac.uk
 
 The data in the plots show the error rates for the possible type of transitions (A being mis-detected as T, G being mis-detected as C, etc.). The red line is the rate of substitution at a particular quality score. The black line is the estimated error rate, and the black dots are the observed values. We expect to see the observed points match up with the estimated line. We also expect to see the overall error rate decrease with increasing quality score.
 
-***START FROM HERE***
-
 
 ## 11) Dereplicate reads, perform _dada_ denoising, merge reads & remove chimeras
 
-This step incorporates several of the dada2 processses:<br>
+This step is the crux of the whole DADA2 workflow and incorporates several of the DADA2 processes:  
+  - Reads are dereplicated (identical reads are collapsed together so save processing time later)  
+  - The main DADA2 denoising algorithm is applied to our read data (this is the all important step where the the error model is employed and unique Amplicon Sequence Variants (ASVs) are identified)  
+  - R1 and R2 reads are merged using their overlap to produce a single, higher quality read), and  
+  - Chimeric reads are identified and removed.
 
-  - Reads are dereplicated (identical reads are collapsed together so save processing time later)<br><br>
-  - The main dada2 denoising algorithm is applied to the reads (this is the all important identification of Amplicon Sequence Variants (ASVs))<br><br>
-  - Reads are merged (paired end reads from the sequencer are merged using their overlap to produce a single, higher quality read)<br><br>
-  - Chimeric reads are identified and removed.<br><br>
-  <br>
+
   To perform the dereplication, denoising, read merging, and chimera removal step, submit the '06_run_derep_dada2_merge_remove_chimeras.sh' script as shown below.<br><br>
   <b>Optionally, you can supply:</b><br>
   - an email address to receive notifications (-E) <br>

@@ -35,7 +35,7 @@ You will need to have access to BluePebble to use this workflow. If you are alre
 
 If you are working on campus (i.e., logged in to Eduroam or on a hard connection), you can skip the next paragraph and log on to the HPC following the instructions further below.
 
-If you are working off campus, you log in as below, but will need to log on to the VPN first. At first use, you will need to install and set up the VPN (BIG-IP Edge Client for Windows/PC or F5 Access for MacOS) from the University of Bristol Self Service portal. Instructions and guidance are available [here](https://uob.sharepoint.com/sites/itservices/SitePages/vpn.aspx). Once this is set up, you should be able to log in to the VPN by launching BIG-IP Edge Client or F5 Access, which will open the familiar web page for you to log in, and you will need to 2FA (two-factor authenticate) with Microsoft Authenticator.
+If you are working off campus, you log in as below, but will need to log on to the VPN first. At first use, you will need to install and set up the VPN (BIG-IP Edge Client for Windows/PC or F5 Access for MacOS) from the University of Bristol Self Service portal. Instructions and guidance are available [here](https://uob.sharepoint.com/sites/itservices/SitePages/vpn.aspx). Once this is set up, you should be able to log in to the VPN by launching BIG-IP Edge Client or F5 Access, which will open the web page for you to log in, and you will need to 2FA (two-factor authenticate) with Microsoft Authenticator.
 
 Connect to BluePebble using a secure shell (SSH) connection. If you are working on a Mac, you can use the terminal for your command-line work. If you are working in PC/Windows, you can download and install packages such as [MobaXterm](https://mobaxterm.mobatek.net/) or [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/), or use MSPowerShell. PuTTY may already be installed on a university-managed PC. If not, it is available through the university software centre. Type the code below into your command line, or provide the information in the relevant host, username and password fields in MobaXterm or PuTTY.
 
@@ -47,7 +47,7 @@ You will be prompted for your password. Once logged in, you will see useful syst
 
 `[username@bp1-login03(BluePebble)`
 
-Users are not allowed to run interactive jobs on a log-in node, but we will use this for managing files and data, editing our scripts and doing small-scale interactive work (i.e., testing if things work and debugging if they don't). All our substantial data analysis will be done through submission scripts. We will use our allocated scratch space as our work space to store and work with all our data, scripts and environments. This is the larger of the two allocations available to you, with a limit of 1TB and 950 k files. It is important to note that data are **not** backed up here, and it is recommended that you back your raw data and scripts up elsewhere. Navigate to your work space:
+Users are not allowed to run interactive jobs on a log-in node, but we will use this for managing files and data, editing our scripts and examining our output. All our substantial data analysis will be done through submission scripts which we will launch from the log-in node and which will be run on the worker nodes. We will use our allocated scratch space as our work space to store and work with all our data, scripts and environments. This is the larger of the two allocations available to you, with a limit of 1TB and 950 k files. It is important to note that data are **not** backed up here, and it is recommended that you back your raw data and scripts up elsewhere. Navigate to your work space:
 
 ```
 cd /user/work/$USER
@@ -75,7 +75,7 @@ Now execute the installer:
 bash Miniforge3-$(uname)-$(uname -m).sh
 ```
 
-You'll be asked to agree to the licence and to confirm the installation location; you may need to specify a new file path to ensure that it is installed in your work space, `/user/work/$USER/miniforge3` , rather than your "home" space.
+You'll be asked to agree to the licence and to confirm the installation location; you may need to specify a new file path to ensure that it is installed in your work space, `/user/work/$USER/miniforge3`, rather than your "home" space.
 
 It will also ask whether it should initialise your shell environment/bash profile (`~/.bashrc`) and activate conda on start-up. Agree to this. This will complete the mamba set-up. You can delete the installer should you wish to keep things tidy:
 
@@ -154,12 +154,11 @@ rm -rf BluePebble_DADA2
 
 ### 4.3) Upload your data to BluePebble
 
-For this workflow, you need to provide the raw, paired-end DNA sequence data and place this within the relevant `/user/work/$USER/my_project/raw_data` directory. If you are using an external/commercial sequencing facility, they may provide you with download instructions or `curl` or `wget` links that will allow you to download directly to the HPC. 
+For this workflow, you need to provide the raw, paired-end DNA sequence data and place this within the relevant `/user/work/$USER/my_project/raw_data` directory. If you are using an external/commercial sequencing facility, they may provide you with download instructions or `curl` or `wget` commands that will allow you to download directly to the HPC. 
 
 If you have your data downloaded to or stored on your computer, you'll need to use a secure file transfer protocol, such as ['scp' in your terminal](https://www.acrc.bris.ac.uk/protected/hpc-docs/transferring_data/index.html#on-linux-or-macos), the upload function and icon in MobaXterm, or [FileZilla](https://filezilla-project.org/) to upload your data to `/user/work/$USER/my_project/raw_data`.
 
 Check that your data has transferred/uploaded correctly by running `ls` on the `raw_data` folder, and you should see so something like this:
-
 
 ```
 ls /user/work/$USER/my_project/raw_data
@@ -211,7 +210,7 @@ cd /user/work/$USER/my_project
 
 ### 5.1) Scripts and submitting jobs
 
-Each step in the workflow uses a pair of separate scripts, which have been downloaded to `/user/work/$USER/my_project/scripts`. An R script, with the `.R` extension, contains the instructions for performing the DADA2 analysis in R on the HPC, and is run by submitting it as a script rather than running individual commands in R, as one would do interactively in RStudio. The shell script, with the `.sh` extension, requests the resources we need for running the analysis from the job scheduler, loads the bash profile, environment and software, parses the arguments for the R script, calls the R script and adds our job to the queue.
+Each step in the workflow uses a pair of separate scripts, which are in `/user/work/$USER/my_project/scripts`. An R script, with the `.R` extension, contains the instructions for performing the DADA2 analysis in R on the HPC, and is run by submitting the commands as a script rather than running individual commands in R, as one would do interactively in RStudio. The shell script, with the `.sh` extension, requests the resources we need for running the analysis from the job scheduler, loads the bash profile, environment and software, parses the arguments for the R script, calls the R script and adds our job to the queue.
 
 We can see an example of such a pair of scripts:
 
@@ -239,14 +238,14 @@ The job will then receive the allocated resources, the task will run, and the ap
 Along with running standardised DADA2 scripts, there are some parameters that will be unique to your data or project, such as primer sequences or trimming/filtering parameters. We'll provide these extra parameters, termed "arguments", in the command line, using "flags", and the shell script will parse them for use by the R script. For example, you might provide your email address to a script using the `-E` flag, like this:
 
 ```
-a_demo_script.sh -E user@university.ac.uk
+sbatch a_demo_script.sh -E user@university.ac.uk
 ```
 
-Details of the various arguments and flags for the various scripts are provided at each of the steps below.
+Details of the various flags and arguments are provided at each of the steps below.
 
 Some editing of the scripts is required before we can begin our analysis. 
 
-One script, `functions.R`, contains R functions that are called and used throughout the workflow. One such function extracts your sample names from the sequence read file names. You will need to edit this before beginning to ensure that the correct sample names are extracted, as slight differences in naming conventions used by different labs or sequencing facilities may result in names being extracted are meaningless to you. If you open the `functions.R` script with "nano" (a Linux text editor), you should see the following section:
+One script, `functions.R`, contains R functions that are called and used throughout the workflow. One such function extracts your sample names from the sequence read file names. You will need to edit this before beginning to ensure that the correct sample names are extracted, as slight differences in naming conventions used by different labs or sequencing facilities may result in names being extracted which are meaningless to you. If you open the `functions.R` script with "nano" (a Linux text editor), you should see the following section:
 
 ```
 nano scripts/functions.R
@@ -263,7 +262,7 @@ This provides two options for extracting sample names. In the first (top) case, 
 
 Use `CTRL + X` to exit "nano". You will be asked if you want to save the changes. Type `y` for yes and hit enter to save using the same file name.
 
-The second edit we need to make to all the submission (`.sh`) scripts we want to use, is to add the account details. This is an **important** directive which we **must have** when submitting any job. Without this, your job will not run and may remain queued. This is the account to which the job is "expensed" (use of the HPC is free, but they do keep track of each project's usage). This number is provided to you when you register an HPC project. If you are joining an existing project, an account number should be available. The number will be a combination of a four-letter department/school code and six numbers (see below). The directive is already included in the downloaded scripts, but will need to be edited to reflect your own account. If you open any of the `.sh` scripts with "nano" (see above), you will see a list of SLURM directives at the top of the file. These all start with `#SBATCH`, which is followed by an argument and the parameters being set. These arguments set the computing resources we need and pass on other instructions (e.g., the file names for the log and error files). 
+The second edit we need to make to all the submission (`.sh`) scripts we want to use, is to add the account details. This is an **important** directive which we **must have** when submitting any job. Without this, your job will not run and may remain queued without giving any indication as to why. This is the account to which the job is "expensed" (use of the HPC is free, but they do keep track of each project's usage). This number is provided to you when you register an HPC project. If you are joining an existing project, an account number should be available from your PI. The number will be a combination of a four-letter department/school code and six numbers (see below). The directive is already included in the downloaded scripts, but will need to be edited to reflect your own account. If you open any of the `.sh` scripts with "nano" (see above), you will see a list of SLURM directives at the top of the file. These all start with `#SBATCH`, which is followed by an argument and the parameters being set. These arguments set the computing resources we need and pass on other instructions (e.g., the file names for the log and error files). 
 
 Look for this line:
 
@@ -287,11 +286,11 @@ In this workflow, the output from one step is (in nearly all the cases) the inpu
 
 ### 5.2) Final checks
 
-Before we begin, it is worth doing final checks to make sure:  
-You are in the correct `my_project` directory, 
-The `raw_data`, `R_objects`, `scripts` and `working_data` folders are there, 
-The `scripts` folder contains your scripts, and 
-Your raw data are in the `raw_data` folder.
+Before we begin, it is worth doing final checks to make sure that:  
+- you are in the correct `my_project` directory,
+- the `raw_data`, `R_objects`, `scripts` and `working_data` folders are there,
+- the `scripts` folder contains your scripts, and
+- your raw data are in the `raw_data` folder.
 
 ```
 pwd
@@ -337,7 +336,6 @@ Optionally, you can also supply:
   - the R2 specific file extension (-P)  
 
 The scripts will determine which of your paired files are the 'R1' files and which are the 'R2' from their file names. During this (N-removal) step, the log file will record the automatically detected extensions. If these are correct, no action is needed. If they are incorrect, you can override the automatic process by using flags above to specify the R1 (`-W`) and the R2 (`-P`) extensions. This will need to be done at each point where these extensions are required (automatic detection happens throughout the workflow).
-
   
 ```
 sbatch scripts/01_run_remove_Ns.sh -D raw_data/ -E user@university.ac.uk
@@ -455,7 +453,7 @@ The command line argument you must supply is:
 sbatch scripts/05_run_generate_error_model.sh -E user@university.ac.uk
 ```
 
-The data in the plots show the error rates for the possible type of transitions (A being mis-detected as T, G being mis-detected as C, etc.). The red line is the rate of substitution at a particular quality score. The black line is the estimated error rate, and the black dots are the observed values. We expect to see the observed points match up with the estimated line. We also expect to see the overall error rate decrease with increasing quality score.
+The data in the plots show the error rates for the possible type of substitutions (A being mis-detected as T, G being mis-detected as C, etc.). The red line is the rate of substitution at a particular quality score. The black line is the estimated error rate, and the black dots are the observed values. We expect to see the observed points match up with the estimated line. We also expect to see the overall error rate decrease with increasing quality score.
 
 
 ## 11) Dereplicate reads, perform _dada_ denoising, merge reads & remove chimeras
@@ -477,7 +475,7 @@ Optionally, you can supply:
 sbatch scripts/06_run_derep_dada2_merge_remove_chimeras.sh -M 115 -L 125 -E user@university.ac.uk
 ```
 
-This script will produce three files in the `working_data` directory. First, `06_ASV_seqs.fasta` will contain the amplicon sequence of each of your identified ASVs in fasta format. A table, `06_ASV_counts.tsv`, contains the read counts for each ASV (identified by its sequence) in each sample. Lastly, `06_ASV_lengths.tsv` listss the sequence length for each ASV amplicon and provides the frequency distribution of the various ASV lengths at the bottom of the file.
+This script will produce three files in the `working_data` directory. First, `06_ASV_seqs.fasta` will contain the amplicon sequence of each of your identified ASVs in fasta format. A table, `06_ASV_counts.tsv`, contains the read counts for each ASV (identified by its sequence) in each sample. Lastly, `06_ASV_lengths.tsv` lists the sequence length for each ASV amplicon and provides the frequency distribution of the various ASV lengths at the bottom of the file.
 
 
 ## 12) Track reads through pipeline
@@ -493,9 +491,7 @@ You will need to provide one command line argument:
 sbatch scripts/07_run_sequence_tracking.sh -E user@university.ac.uk
 ```
 
-The a tab-delimited text table will be emailed to you and will also be saved in your `working_data` directory. 
-
-Viewing the table, the columns present the following for each sample:  
+A tab-delimited text table will be emailed to you and will also be saved in your `working_data` directory. Viewing the table, the columns present the following for each sample:  
 - "input": The number of reads extracted from your original read file using _cutadapt_ and from which the primer sequences were removed. 
 - "filtered": The number of reads remaining after your quality filtering and trimming with _filterAndTrim_. These reads are the input for the main DADA2 processes.
 - "denoisedF": The number of R1 or F reads remaining after denoising with DADA2. These represent reads that are identified and attributed to ASVs and not flagged and discarded as being errors using the error model that was generated previously.
@@ -503,7 +499,7 @@ Viewing the table, the columns present the following for each sample:
 - "merged": The number of reads attributed to ASVs that were successfully merged, stitching the R1/F and R2/R reads together.
 - "nochim": The number of reads attributed to ASVs that were retained after chimeric sequences were removed.
 
-Examine the values carefully. If there are significant issues with your data, they are likely to manifest in two places. If you see a significant drop in the number of reads in the "filtered" column, that points to sequence/data quality issues. You may need to assess the quality of your raw data (see the section at the end of the workflow). If there are not enough data remaining at the end of the workflow, you could revisit your filtering at the _filterAndTrim_ step, checking for argument errors and perhaps being less conservative with the parameters you use. If you see a drop at the "merged" column, that is because the forward (R1) and reverse (R2) reads are too short and there is insufficient overlap between them to stitch them together. This may result from a misalignment of your library and the sequencing kit. It's unlikely, but it can happen that your amplicons were too long for the sequencing kit used, and these are not sequenced through to a length that will allow the R1 and R2 reads to overlap. It is more likely that the trimming and truncation in _filterAndTrim_ cut too much of the reads off at the end. You may need to be a little more permissive of poorer quality data and cut less off from the ends. If there is a substantial difference in quality between R1 and R2 and there is no way of (comfortably) extending the length of the R2 reads, it is possible to use the workflow processing the R1 reads only. Contact the author (details above) for scripts and advice.
+Examine the values carefully. If there are significant issues with your data, they are likely to manifest in two places. A significant drop in the number of reads in the "filtered" column points to sequence/data quality issues. You may need to assess the quality of your raw data (see the section at the end of the workflow). If there are not enough data remaining at the end of the workflow, you could revisit your filtering at the _filterAndTrim_ step, checking for argument errors and perhaps being less conservative with the parameters you use. If you see a drop at the "merged" column, that is because the forward (R1) and reverse (R2) reads are too short and there is insufficient overlap between them to stitch them together. This may result from a misalignment of your library and the sequencing kit. It's unlikely, but it can happen that your amplicons were too long for the sequencing kit used, and these are not sequenced through to a length that will allow the R1 and R2 reads to overlap. It is more likely that the trimming and truncation in _filterAndTrim_ cut too much of the reads off at the end. You may need to be a little more permissive of poorer quality data and cut less off from the ends. If there is a substantial difference in quality between R1 and R2 and there is no way of (comfortably) extending the length of the R2 reads, it is possible to use the workflow processing the R1 reads only. Contact the author (details above) for scripts and advice.
 
 
 ## 13) Assigning taxonomy to our ASVs

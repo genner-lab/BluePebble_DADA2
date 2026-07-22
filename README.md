@@ -526,11 +526,11 @@ Download your chosen database locally and then upload it to this directory, as y
 
 ### 13.2) Assigning taxonomy
 
-In simple terms, in each of these two approaches, each ASV is compared to the reference database and assigned a taxonomy based on the closest sequence match. 
+In simple terms, in both approaches, each ASV is compared to the reference database and assigned a taxonomy based on the closest sequence match. 
 
 _assignTaxonomy_ uses a RDP naive Bayesian classifier to compare the kmer profile of the ASV sequence with the kmer profiles of the sequences in a training set for which taxonomy has been assigned (typically from Kingdom to Genus). The reference sequence with the most similar profile is used to assign the taxonomy to the query sequence, and a bootstrapping procedure is used to assess the confidence of the assignment at each taxonomic rank.
 
-_assign_Species_ is a more direct approach and uses exact (string) matching of the query sequence with the sequences in the reference database, which have a binomial Genus-Species assignment. Matches and assignments are made only if they are exact and unambiguous. The output will also not reflect taxonomic assigments above Genus (although this can be inferred). As such, it could be worthwhile to use both assignment tools and combine the output.
+_assignSpecies_ is a more direct approach and uses exact (string) matching of the query sequence with the sequences in the reference database, which have a binomial Genus-Species assignment. Matches and assignments are made only if they are exact and unambiguous. The output will also not reflect taxonomic assigments above Genus (although this can be inferred). As such, it could be worthwhile to use both assignment tools and combine the output.
 
 To complete the taxonomic assignment, we will submit the script below. Both options are presented; use whichever is applicable.  
 

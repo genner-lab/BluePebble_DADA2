@@ -474,7 +474,7 @@ Optionally, you can supply:
   - an email address to receive a notifications of completion (-E)  
 
 ```
-sbatch scripts/06_run_derep_dada2_merge_remove_chimeras.sh -M 115 -L 125-E user@university.ac.uk
+sbatch scripts/06_run_derep_dada2_merge_remove_chimeras.sh -M 115 -L 125 -E user@university.ac.uk
 ```
 
 This script will produce three files in the `working_data` directory. First, `06_ASV_seqs.fasta` will contain the amplicon sequence of each of your identified ASVs in fasta format. A table, `06_ASV_counts.tsv`, contains the read counts for each ASV (identified by its sequence) in each sample. Lastly, `06_ASV_lengths.tsv` listss the sequence length for each ASV amplicon and provides the frequency distribution of the various ASV lengths at the bottom of the file.

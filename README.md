@@ -461,11 +461,10 @@ The data in the plots show the error rates for the possible type of transitions 
 ## 11) Dereplicate reads, perform _dada_ denoising, merge reads & remove chimeras
 
 This step is the crux of the whole DADA2 workflow and incorporates several of the DADA2 processes:  
-  - Reads are dereplicated (identical reads are collapsed together so save processing time later)  
-  - The main DADA2 denoising algorithm is applied to our read data (this is the all important step where the the error model is employed and unique Amplicon Sequence Variants (ASVs) are identified)  
+  - Reads are dereplicated (identical reads are collapsed together to save processing time later),  
+  - The main DADA2 denoising algorithm is applied to our read data; this is the all important step where the the error model is employed and unique Amplicon Sequence Variants (ASVs) are identified,  
   - R1 and R2 reads are merged using their overlap to produce a single, higher quality read), and  
   - Chimeric reads are identified and removed.
-
 
 To perform the dereplication, denoising, read merging and chimera removal, submit the `06_run_derep_dada2_merge_remove_chimeras.sh` script as below.
 
@@ -487,19 +486,28 @@ cut -f 3 working_data/06_ASV_lengths.tsv | grep -v "Length" | sort | uniq -c
 
 Having applied quality trimming, DADA2 denoising and chimera removal (amongst other processes), it is a good idea to track how many reads have been removed at each stage as this may allow the identification of any issues in the data.
 
-We will generate a table summarising the numbers of reads remaining after each of the major steps by running `07_run_sequence_tracking.sh` script, as below:
+We will generate a table summarising the numbers of reads remaining after each of the major steps by running the `07_run_sequence_tracking.sh` script, as below.
 
-The command line argument that must be supplied is:  
+You will need to provide one command line argument:  
 - an email address to receive the read tracking table (-E)
 
 ```
 sbatch scripts/07_run_sequence_tracking.sh -E user@university.ac.uk
 ```
 
-The table will be emailed to you and will also be saved in your `working_data` directory. 
+The a tab-delimited text table will be emailed to you and will also be saved in your `working_data` directory. 
 
-Viewing the table, the columns correspond to:  
-- The number of reads extracted using _cutadapt_ and from which the primer sequences were removed You can view the table, using `less` (press `q` to close when done):
+Viewing the table, the columns present the following for each sample:  
+- "input": The number of reads extracted from your original read file using _cutadapt_ and from which the primer sequences were removed. 
+- "filtered": The number of reads remaining after your quality filtering and trimming with _filterAndTrim_. These reads are the input for the main DADA2 processes.
+- "denoisedF": The number of R1 or F reads remaining after denoising with DADA2. These represent reads that are identified and attributed to ASVs and not flagged and discarded as being errors using the error model that was generated previously.
+- "denoisedR": The number of R2 or R reads remaining after denoising with DADA2.
+- "merged": The number of reads attributed to ASVs that were successfully merged, stitching the R1/F and R2/R reads together.
+- "nochim": The number of reads attributed to ASVs that were retained after chimeric sequences were removed.
+
+Examine the values carefully. If there are significant issues with your data, they are likely to manifest in two places. If you see a significant drop in the number of reads in the "filtered" column, that points to sequence/data quality issues. You may need to assess the quality of your raw data (see the section at the end of the workflow). If there are not enough data remaining at the end of the workflow, you could revisit your filtering at the _filterAndTrim_ step, checking for argument errors and perhaps being less conservative with the parameters you use. If you see a drop at the "merged" column, that is because the forward (R1) and reverse (R2) reads are too short and there is insufficient overlap between them to stitch them together. This may result from a misalignment of your library and the sequencing kit. It's unlikely, but it can happen that your amplicons were too long for the sequencing kit used, and these are not sequenced through to a length that will allow the R1 and R2 reads to overlap. It is more likely that the trimming and truncation in _filterAndTrim_ cut too much of the reads off at the end. You may need to be a little more permissive of poorer quality data and cut less off from the ends. If there is a substantial difference in quality between R1 and R2 and there is no way of (comfortably) extending the length of the R2 reads, it is possible to use the workflow processing the R1 reads only. Contact the author (details above) for scripts and advice.
+
+
 
 ```
 l```

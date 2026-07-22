@@ -508,26 +508,42 @@ Viewing the table, the columns present the following for each sample:
 Examine the values carefully. If there are significant issues with your data, they are likely to manifest in two places. If you see a significant drop in the number of reads in the "filtered" column, that points to sequence/data quality issues. You may need to assess the quality of your raw data (see the section at the end of the workflow). If there are not enough data remaining at the end of the workflow, you could revisit your filtering at the _filterAndTrim_ step, checking for argument errors and perhaps being less conservative with the parameters you use. If you see a drop at the "merged" column, that is because the forward (R1) and reverse (R2) reads are too short and there is insufficient overlap between them to stitch them together. This may result from a misalignment of your library and the sequencing kit. It's unlikely, but it can happen that your amplicons were too long for the sequencing kit used, and these are not sequenced through to a length that will allow the R1 and R2 reads to overlap. It is more likely that the trimming and truncation in _filterAndTrim_ cut too much of the reads off at the end. You may need to be a little more permissive of poorer quality data and cut less off from the ends. If there is a substantial difference in quality between R1 and R2 and there is no way of (comfortably) extending the length of the R2 reads, it is possible to use the workflow processing the R1 reads only. Contact the author (details above) for scripts and advice.
 
 
+## 13) Assigning taxonomy to our ASVs
+
+If we are satisfied with the quality of our data, the number of ASVs identified and the number of reads that have tracked through the pipeline for our samples, we can then assign taxonomy to our ASVs. There are several tools and options available for doing this. In this workflow, we will use the DADA2 functions, _assignTaxonomy_ or _assignSpecies_ (or use them in combination). 
+
+
+### 13.1) Download the reference database
+
+First of all, we will need to choose and download a reference database (suited to our marker and focal taxa), which is formatted for DADA2. There are several DADA2-formatted reference databases available [here](https://benjjneb.github.io/dada2/training.html). The link also provides instructions for curating your own databases. 
+
+Create a directory in which we will place the reference database. The script can accommodate any path to our database, but for ease of use we will create one within `my_project`.
 
 ```
-l```
+mkdir database
+```
 
-  </details>
-  <br>
-  <details><summary><font size="6"><b>11) Assign taxonomy to ASVs</b></font></summary><br><br>
-  Now we have a set of ASVs, the final stage of the dada2 workflow is to assign a taxonomy to each ASV.
-  Here, each ASV is compared to the reference database and assigned a taxonomy based on the closest sequence match.<br><br>
-
-  To perform the taxonomy assignment step, submit the '08_run_assign_taxonomy.sh' script as shown below.<br><br>
-  <b>The command line arguments you must supply are:</b><br>
-  - an appropriate reference database (-B)
-  <br><br>
-  <b>Optionally, you can supply:</b><br>
-  - an email address to the taxonomic assignments (-E) <br>
-
-  ```
-  sbatch scripts/08_run_assign_taxonomy.sh -B /shared/genomicsdb2/shared/silva/current/ -E user@university.ac.uk
-
-  ```  
+Download your chosen database locally and then upload it to this directory, as you did for your data (above).
 
 
+### 13.2) Assigning taxonomy
+
+In simple terms, in each of these two approaches, each ASV is compared to the reference database and assigned a taxonomy based on the closest sequence match. 
+
+_assignTaxonomy_ uses a RDP naive Bayesian classifier to compare the kmer profile of the ASV sequence with the kmer profiles of the sequences in a training set for which taxonomy has been assigned (typically from Kingdom to Genus). The reference sequence with the most similar profile is used to assign the taxonomy to the query sequence, and a bootstrapping procedure is used to assess the confidence of the assignment at each taxonomic rank.
+
+_assign_Species_ is a more direct approach and uses exact (string) matching of the query sequence with the sequences in the reference database, which have a binomial Genus-Species assignment. Matches and assignments are made only if they are exact and unambiguous. The output will also not reflect taxonomic assigments above Genus (although this can be inferred). As such, it could be worthwhile to use both assignment tools and combine the output.
+
+To complete the taxonomic assignment, we will submit the script below. Both options are presented; use whichever is applicable.  
+
+We will need to provide one mandatory argument:
+  - the path to our reference database (-B)
+
+You can also provide:
+  - an email address to receive the taxonomic assignments (-E)
+
+```
+sbatch scripts/08_run_assign_taxonomy.sh -B database/our_database.fasta -E user@university.ac.uk
+
+sbatch scripts/08_run_assign_species.sh -B database/genus_species_database.fasta -E user@university.ac.uk
+```

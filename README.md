@@ -469,17 +469,15 @@ This step is the crux of the whole DADA2 workflow and incorporates several of th
 To perform the dereplication, denoising, read merging and chimera removal, submit the `06_run_derep_dada2_merge_remove_chimeras.sh` script as below.
 
 Optionally, you can supply:  
-  - an email address to receive notifications (-E)
+  - the minimum length of ASV sequences, if you want to filter ASV sequences on length (-M; default is 0) 
+  - the maximum length of ASV sequences, if you want to filter ASV sequences on length (-L; default is 1000)
+  - an email address to receive a notifications of completion (-E)  
 
 ```
-sbatch scripts/06_run_derep_dada2_merge_remove_chimeras.sh -E user@university.ac.uk
+sbatch scripts/06_run_derep_dada2_merge_remove_chimeras.sh -M 115 -L 125-E user@university.ac.uk
 ```
 
-This script will produce three files in the `working_data` directory. First, `06_ASV_seqs.fasta` will contain the amplicon sequence of each of your identified ASVs in fasta format. A table, `06_ASV_counts.tsv`, contains the read counts for each ASV (identified by its sequence) in each sample. Lastly, `06_ASV_lengths.tsv` provides the sequence length for each ASV amplicon. If you are interested in the distribution of amplicon lengths, you can summarise this information with the following command:
-
-```
-cut -f 3 working_data/06_ASV_lengths.tsv | grep -v "Length" | sort | uniq -c
-```
+This script will produce three files in the `working_data` directory. First, `06_ASV_seqs.fasta` will contain the amplicon sequence of each of your identified ASVs in fasta format. A table, `06_ASV_counts.tsv`, contains the read counts for each ASV (identified by its sequence) in each sample. Lastly, `06_ASV_lengths.tsv` listss the sequence length for each ASV amplicon and provides the frequency distribution of the various ASV lengths at the bottom of the file.
 
 
 ## 12) Track reads through pipeline

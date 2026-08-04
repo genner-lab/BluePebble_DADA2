@@ -344,7 +344,7 @@ sbatch scripts/01_run_remove_Ns.sh -D raw_data/ -E user@university.ac.uk
 
 ## 7) Run _cutadapt_ to remove primer sequences
 
-The next step is to run _cutadapt_ on the data. [_Cutadapt_](https://cutadapt.readthedocs.io/en/stable/index.html") is a tool for finding and removing primer sequences from NGS data. In this script, we use _cutadapt_ to scan the data and identify sequence reads that contain the primer sequences (in various orientations), extract those reads (discarding those in which no primer sequences were found), and then remove the primer sequences, leaving only the amplicon. The scan is then repeated to check that no primer sequences remain. If you believe that there are substantial sequencing errors in your data, such that the primer sequences cannot be identified, an alternative approach is presented at the end of this workflow, where primers are trimmed based on length. This is generally **not** advised as spurious sequences that are not true amplicons will be retained. It will also be intractable where your sequence read files contain data from multiple primer sets.
+The next step is to run _cutadapt_ on the data. [_Cutadapt_](https://cutadapt.readthedocs.io/en/stable/index.html") is a tool for finding and removing primer sequences from NGS data. In this script, we use _cutadapt_ to scan the data and identify sequence reads that contain the primer sequences (in various orientations), extract those reads (discarding those in which no primer sequences were found), and then remove the primer sequences, leaving only the amplicon. The scan is then repeated to check that no primer sequences remain. If you believe that there are substantial sequencing errors in your data, such that the primer sequences cannot be identified, an alternative approach is presented at the end of this workflow.
 
 Two files will be generated in the `working_data` directory (`02_pre_trim_primer_counts.tsv` and `02_post_trim_primer_counts.tsv`), while the _cutadapt_-processed sequence files will be in the directory `working_data/cutadapt`.
 
@@ -559,3 +559,24 @@ sbatch scripts/run_fastqc.sh -F _R1.fastq.gz -R _R2.fastq.gz
 Once the script has finished running, the fastQC output will be in a `fastqc` folder. The MultiQC reports will be placed in a folder called `quality_reports`, which you can download to view the contents in a browser. There will be two MultiQC plots, one for the R1 reads for all your samples (`Raw_data_R1_multiqc_report.html`) and one for the R2 reads (`Raw_data_R2_multiqc_report.html`).
 
 
+### ii) Trimming primers based on length
+
+The script below here offers an alternative for removing primer sequences from the sequence reads. It was developed for a particular instance where sequence quality in the primer region at the start of the R1 and R2 reads was poor and prevented _cutadapt_ from identifying and matching the primer sequences in the reads, even allowing for more mismatches and errors. As a result, very few reads were extracted and processed down the workflow. In this script, the `--trim-left` function of _filterAndTrim_ is used to remove a given length of sequence, corresponding to the length of the primers (and any remaining adapters) from start of the R1 and R2 reads, such that only the amplicon remains for further processing. The length of the primer to be removed will need to be determined beforehand, preferably from the read data directly.
+
+This approach is generally **not** advised unless absolutely necessary to salvage data. As we are not extracting only those reads that contain the primer sequence, as we do with _cutadapt_, all reads will be retained and trimmed, including spurious sequences that are not true amplicons. If following this approach, it may be worth implementing length filtering of your ASVs, based on the expected size of the amplicon (see Step 11), to remove some of the spurious reads. This approach is obviously intractable where your sequence read files contain data from multiple primer sets.
+
+Although we are using _filterAndTrim_ rather than _cutadapt_, this script maintains the naming conventions with respect to the file structure and the creation of the R-objects, so that the remainder of the workflow is followed as though _cutadapt_ was run.
+
+To remove primer sequences from the files using _filterAndTrim_, submit the 'primer_removal_by_length.sh' script, as shown below.
+
+The command line arguments you must supply are:  
+- the directory of raw data (-D)
+- the length of the (forward) primer to be removed from the R1 read (-F)
+- the length of the (reverse) primer to be removed from the R2 read (-R)
+
+Optionally, you can also supply:  
+- an email address to receive a notifications (-E)
+
+```
+sbatch scripts/primer_removal_by_length.sh -D raw_data/ -F 26 -R 27 -E user@university.ac.uk
+```

@@ -550,8 +550,21 @@ Finally, we will compile our output from the DADA2 workflow for downstream commu
 - `sample_data`, a matrix or data frame containing the metadata for our samples, and
 - `phylo`, and optional phylogeny of our ASVs that is needed should you wish to use the phylogenetically aware diversity indices in _phyloseq_.
 
-The script below will convert our count data (`06_ASV_counts.tsv`) and taxonomic assignments (from Step 13) into the format required for the `out_table` and `tax_table`, respectively. It will also construct a phylogeny of our ASV sequences (`06_ASV_seqs.fasta`) and save this as an R data file. To do this, it aligns the sequences using in [MAFFT](https://mafft.cbrc.jp/alignment/server/index.html), using a xxxx approach, and then uses [IQTREE](https://iqtree.github.io) to determine the optimal model of nucleotide substitution/sequence evolution and implements this in the construction of a maximum likelihood tree.   
+The script below, `09_run_make_phyloseq_files.sh`, will produce a summary table, containing the our ASV sequences, count data and taxonomic assignments, and email this to you upon conclusion. Our count data (`06_ASV_counts.tsv`) and taxonomic assignments (from Step 13) will be converted and exported into the format required for the `out_table` and `tax_table`, respectively. The script will also construct a phylogeny of our ASV sequences (`06_ASV_seqs.fasta`) and save this as an R data file. To do this, it aligns the sequences in [MAFFT](https://mafft.cbrc.jp/alignment/server/index.html), using a xxxx approach, and then uses [IQTREE](https://iqtree.github.io) to determine the optimal model of nucleotide substitution/sequence evolution and implements this in the construction of a maximum likelihood tree. The phylogenetic analysis may take a long time to complete, depending on the number of the ASVs in your data set. You may need to revisit the resources (memory and time requirements) in the submission script should this fail to complete. If you do not need the phylogeny or do not want to commit the time, you can delete this from the `09_make_phyloseq_files.R` script. Annotations indicate the section to be deleted.  
 
+The script is run as follows, with the only argument required being an email address to receive the summary file will be sent:
+
+```
+sbatch scripts/09_run_make_phyloseq_files.sh -E user@university.ac.uk
+```
+  
+When complete, the following files are created in the `working_data` directory:  
+- `ASV_taxa_seq_counts.tsv`: the summary of all the results, which is emailed to you,
+- `ps_taxamat.tsv`: ASV taxon paths in _phyloseq_ format,
+- `ps_countmat.tsv`: the ASV count matrix in _phyloseq_ format, and (if included)
+- `ps_phylogeny.rds`: the phylogenetic tree prepared from the ASV sequences.
+
+These files can be downloaded and then opened in R for importing into the `phyloseq` object, along with your metadata.
 
 
 ## Additional resources and scripts

@@ -1,4 +1,4 @@
-# DADA2 Metabarcoding workflow using the University of Bristol ACRC BluePebble HPC
+# DADA2 metabarcoding workflow using the University of Bristol ACRC BluePebble HPC
 
 
 
@@ -541,3 +541,21 @@ sbatch scripts/08_run_assign_taxonomy.sh -B database/our_database.fasta -E user@
 
 sbatch scripts/08_run_assign_species.sh -B database/genus_species_database.fasta -E user@university.ac.uk
 ```
+
+## Additional resources and scripts
+
+### i) Quality assessment of raw data
+
+A script is available for you to assess the quality of your raw sequence reads, should you wish to. This script will run [fastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/), which is installed in the `metabarcoding` environment, on the R1 and R2 read files of each sample separately. The script then uses [MultiQC](https://multiqc.info) to compile the fastQC reports for the individual read files into combined quality plots and assessments (in 'html' format), which you can download and view in a browser.
+  
+The command line arguments you must supply are:  
+- the file extension for your R1 reads (-F)
+- the file extension for your R2 reads (-R)
+
+```
+sbatch scripts/_run_fastqc.sh -F _R1.fastq.gz -R _R2.fastq.gz
+```
+
+Once the script has finished running, the fastQC output will be in a 'fastqc' folder. The MultiQC reports will be placed in a folder called 'quality_reports', which you can download to view the contents in a browser. There will be two MultiQC plots, one for the R1 reads for all your samples ('Raw_data_R1_multiqc_report.html') and one for the R2 reads ('Raw_data_R2_multiqc_report.html').
+
+

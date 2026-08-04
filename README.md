@@ -553,7 +553,7 @@ The command line arguments you must supply are:
 - the file extension for your R2 reads (-R)
 
 ```
-sbatch scripts/_run_fastqc.sh -F _R1.fastq.gz -R _R2.fastq.gz
+sbatch scripts/run_fastqc.sh -F _R1.fastq.gz -R _R2.fastq.gz
 ```
 
 Once the script has finished running, the fastQC output will be in a `fastqc` folder. The MultiQC reports will be placed in a folder called `quality_reports`, which you can download to view the contents in a browser. There will be two MultiQC plots, one for the R1 reads for all your samples (`Raw_data_R1_multiqc_report.html`) and one for the R2 reads (`Raw_data_R2_multiqc_report.html`).

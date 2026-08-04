@@ -526,7 +526,7 @@ In simple terms, in both approaches, each ASV is compared to the reference datab
 
 _assignTaxonomy_ uses a RDP naive Bayesian classifier to compare the kmer profile of the ASV sequence with the kmer profiles of the sequences in a training set for which taxonomy has been assigned (typically from Kingdom to Genus). The reference sequence with the most similar profile is used to assign the taxonomy to the query sequence, and a bootstrapping procedure is used to assess the confidence of the assignment at each taxonomic rank.
 
-_assignSpecies_ is a more direct approach and uses exact (string) matching of the query sequence with the sequences in the reference database, which have a binomial Genus-Species assignment. Matches and assignments are made only if they are exact and unambiguous. The output will also not reflect taxonomic assigments above Genus (although this can be inferred). As such, it could be worthwhile to use both assignment tools and combine the output.
+_assignSpecies_ is a more direct approach and uses exact (string) matching of the query sequence with the sequences in the reference database, which have a binomial Genus-Species assignment. Matches and assignments are made only if they are exact and unambiguous. The output will not reflect taxonomic assigments above Genus (although this can be inferred). As such, it could be worthwhile to use both assignment tools and combine the output.
 
 To complete the taxonomic assignment, we will submit the script below. Both options are presented; use whichever is applicable.  
 
@@ -541,6 +541,18 @@ sbatch scripts/08_run_assign_taxonomy.sh -B database/our_database.fasta -E user@
 
 sbatch scripts/08_run_assign_species.sh -B database/genus_species_database.fasta -E user@university.ac.uk
 ```
+
+## 14) Compiling output for _phyloseq_
+
+Finally, we will compile our output from the DADA2 workflow for downstream community analysis in the R package [_phyloseq_](https://joey711.github.io/phyloseq/). All data manipulation, visualisation and analysis in _phyloseq_ is done using a `phyloseq` object that is compiled from:  
+- an `otu_table`, containing the counts of the various ASVs or OTUs in each sample,
+- a `tax_table`, containing the hierarchical taxonomic assignment of each ASV,
+- `sample_data`, a matrix or data frame containing the metadata for our samples, and
+- `phylo`, and optional phylogeny of our ASVs that is needed should you wish to use the phylogenetically aware diversity indices in _phyloseq_.
+
+The script below will convert our count data (`06_ASV_counts.tsv`) and taxonomic assignments (from Step 13) into the format required for the `out_table` and `tax_table`, respectively. It will also construct a phylogeny of our ASV sequences (`06_ASV_seqs.fasta`) and save this as an R data file. To do this, it aligns the sequences using in [MAFFT](https://mafft.cbrc.jp/alignment/server/index.html), using a xxxx approach, and then uses [IQTREE](https://iqtree.github.io) to determine the optimal model of nucleotide substitution/sequence evolution and implements this in the construction of a maximum likelihood tree.   
+
+
 
 ## Additional resources and scripts
 

@@ -331,7 +331,7 @@ There is one command line argument you must supply:
   - the directory of raw data files (-D)
 
 Optionally, you can also supply:  
-  - an email address to receive notifications (-E flag)  
+  - an email address to receive a notification when complete (-E flag)  
   - the R1 specific file extension (-W)  
   - the R2 specific file extension (-P)  
 
@@ -356,7 +356,7 @@ The command line arguments you must provide are:
   - the reverse primer sequence (-R)  
 
 Optionally, you can also provide:  
-  - an email address to receive notifications (-E)  
+  - an email address to receive a notification when complete (-E)  
   - a minimum read length (any processed reads shorter than this length are discarded) (-M)  
   - the number of occurrences of a primer to be trimmed (-N)  
 
@@ -561,13 +561,13 @@ Once the script has finished running, the fastQC output will be in a `fastqc` fo
 
 ### ii) Trimming primers based on length
 
-The script below here offers an alternative for removing primer sequences from the sequence reads. It was developed for a particular instance where sequence quality in the primer region at the start of the R1 and R2 reads was poor and prevented _cutadapt_ from identifying and matching the primer sequences in the reads, even allowing for more mismatches and errors. As a result, very few reads were extracted and processed down the workflow. In this script, the `--trim-left` function of _filterAndTrim_ is used to remove a given length of sequence, corresponding to the length of the primers (and any remaining adapters) from start of the R1 and R2 reads, such that only the amplicon remains for further processing. The length of the primer to be removed will need to be determined beforehand, preferably from the read data directly.
+The script below here offers an alternative for removing primer sequences from the sequence reads. It was developed for a particular instance where sequence quality in the primer region at the start of the R1 and R2 reads was poor and prevented _cutadapt_ from identifying and matching the primer sequences in the reads, even allowing for mismatches and errors. As a result, very few reads were extracted and processed down the workflow. In this script, the `--trim-left` function of _filterAndTrim_ is used to remove a given length of sequence, corresponding to the length of the primers (and any remaining adapters) from start of the R1 and R2 reads, such that only the amplicon remains for further processing. The length of the primer to be removed will need to be determined beforehand, preferably from the read data directly.
 
-This approach is generally **not** advised unless absolutely necessary to salvage data. As we are not extracting only those reads that contain the primer sequence, as we do with _cutadapt_, all reads will be retained and trimmed, including spurious sequences that are not true amplicons. If following this approach, it may be worth implementing length filtering of your ASVs, based on the expected size of the amplicon (see Step 11), to remove some of the spurious reads. This approach is obviously intractable where your sequence read files contain data from multiple primer sets.
+This approach is generally **not** advised unless absolutely necessary to salvage data. As we are not extracting only those reads that contain the primer sequence, as we do with _cutadapt_, all reads will be retained and trimmed, including spurious sequences that are not true amplicons. If following this approach, it may be worth implementing length filtering of your ASVs (see Step 11), based on the expected size of the amplicon, to remove some of the spurious reads. This approach is obviously intractable where your sequence read files contain data from multiple primer sets.
 
 Although we are using _filterAndTrim_ rather than _cutadapt_, this script maintains the naming conventions with respect to the file structure and the creation of the R-objects, so that the remainder of the workflow is followed as though _cutadapt_ was run.
 
-To remove primer sequences from the files using _filterAndTrim_, submit the 'primer_removal_by_length.sh' script, as shown below.
+To remove primer sequences from the files using _filterAndTrim_, submit the `primer_removal_by_length.sh` script, as shown below.
 
 The command line arguments you must supply are:  
 - the directory of raw data (-D)
@@ -575,7 +575,7 @@ The command line arguments you must supply are:
 - the length of the (reverse) primer to be removed from the R2 read (-R)
 
 Optionally, you can also supply:  
-- an email address to receive a notifications (-E)
+- an email address to receive a notification (-E)
 
 ```
 sbatch scripts/primer_removal_by_length.sh -D raw_data/ -F 26 -R 27 -E user@university.ac.uk

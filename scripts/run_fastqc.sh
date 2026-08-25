@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=run_fastqc
 #SBATCH --output=run_fastqc_%j.log
-#SBATCH --error=run_raw_fastqc_%j_error.log
+#SBATCH --error=run_fastqc_%j_error.log
 #SBATCH --account=xxxxXXXXXX
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1

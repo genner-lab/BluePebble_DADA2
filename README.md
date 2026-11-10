@@ -1,4 +1,4 @@
-# DADA2 metabarcoding workflow using the University of Bristol ACRC BluePebble HPC
+# DADA2 metabarcoding workflow using BluePebble
 
 
 
